@@ -23,6 +23,7 @@ int main() {
         okapy::CatalogResult::Added);
     assert(registry.size() == 2);
     assert(registry.find("example.base")->state == okapy::ModState::Installed);
+    assert(!catalog.isEnabled("example.base"));
 
     assert(catalog.install(mod("example.base", "1.0.0"), base) ==
         okapy::CatalogResult::AlreadyExists);
@@ -32,6 +33,7 @@ int main() {
 
     assert(catalog.setEnabled("example.base", true));
     assert(catalog.setEnabled("example.addon", true));
+    assert(catalog.isEnabled("example.base"));
     auto report = catalog.resolveEnabled();
     assert(!report.hasErrors());
     assert(report.loadOrder.size() == 2);
@@ -45,6 +47,7 @@ int main() {
     assert(catalog.uninstall("example.base") == okapy::CatalogResult::ModEnabled);
 
     assert(catalog.setEnabled("example.base", false));
+    assert(!catalog.isEnabled("example.base"));
     assert(catalog.update(mod("example.base", "2.0.0"), base) ==
         okapy::CatalogResult::Updated);
     assert(registry.find("example.base")->version == "2.0.0");
