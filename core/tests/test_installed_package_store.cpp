@@ -12,6 +12,8 @@ int main() {
     error.clear();
     fs::create_directories(root / "example.mod" / "libs", error);
     assert(!error);
+    fs::create_directories(root / "empty.mod", error);
+    assert(!error);
 
     {
         std::ofstream marker(root / "example.mod" / "okapy.json");
