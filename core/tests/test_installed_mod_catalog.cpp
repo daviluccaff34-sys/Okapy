@@ -38,6 +38,13 @@ int main() {
     assert(report.loadOrder[0] == "example.base");
     assert(report.loadOrder[1] == "example.addon");
 
+    // An enabled native mod must be disabled before its package can be replaced.
+    assert(catalog.update(mod("example.base", "2.0.0"), base) ==
+        okapy::CatalogResult::ModEnabled);
+    assert(registry.find("example.base")->version == "1.0.0");
+    assert(catalog.uninstall("example.base") == okapy::CatalogResult::ModEnabled);
+
+    assert(catalog.setEnabled("example.base", false));
     assert(catalog.update(mod("example.base", "2.0.0"), base) ==
         okapy::CatalogResult::Updated);
     assert(registry.find("example.base")->version == "2.0.0");
@@ -51,6 +58,9 @@ int main() {
     assert(catalog.manifests().size() == 2);
     assert(catalog.manifest("example.addon").has_value());
 
+    // Removal is also blocked until the mod is disabled.
+    assert(catalog.uninstall("example.base") == okapy::CatalogResult::ModEnabled);
+    assert(catalog.setEnabled("example.base", false));
     assert(catalog.uninstall("example.base") == okapy::CatalogResult::Removed);
     assert(!registry.find("example.base").has_value());
     assert(!catalog.manifest("example.base").has_value());
