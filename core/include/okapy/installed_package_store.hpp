@@ -2,6 +2,7 @@
 
 #include <okapy/installed_mod_catalog.hpp>
 
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -38,6 +39,7 @@ public:
 
 private:
     InstalledModCatalog& m_catalog;
+    mutable std::mutex m_mutex;
     std::string m_root;
 };
 
