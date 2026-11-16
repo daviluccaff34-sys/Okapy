@@ -112,10 +112,10 @@ object OkapyPackageInstaller {
                     val parent = output.parentFile
                         ?: throw InstallFailure("Package entry has no parent directory.")
                     if (parent.exists() && !parent.isDirectory) {
-                        return abort(staging, "Package contains a file/directory path collision.")
+                        throw InstallFailure("Package contains a file/directory path collision.")
                     }
                     if (!parent.exists() && !parent.mkdirs()) {
-                        return abort(staging, "Could not create a package directory.")
+                        throw InstallFailure("Could not create a package directory.")
                     }
                     if (output.exists()) {
                         throw InstallFailure("Package contains duplicate output paths.")
