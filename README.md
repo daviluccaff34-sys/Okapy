@@ -16,8 +16,9 @@ The initial development version is **0.00.1**. The first Beta is planned as **0.
 - Geometry Dash package detection: implemented.
 - Ordinary launch of the installed game: implemented.
 - .okapy ZIP/manifest validator: initial implementation exists, not yet built or tested.
-- Mod installation and management: not implemented.
-- Native runtime, dependency planner, and native loading: not implemented.
+- .okapy extraction installer: initial implementation exists, not yet built or tested or connected to the launcher UI.
+- Mod catalog, dependency planner, and enable/disable management: not implemented.
+- Native runtime and native loading: not implemented.
 - SDK and developer tooling: not implemented.
 - Android game-host integration: still under technical investigation.
 
