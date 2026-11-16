@@ -10,10 +10,37 @@ Android and Geometry Dash so its systems can be developed and tested separately.
 - Thread-safe in-memory `ModRegistry`.
 - `DependencyManager` for enabled-mod dependency validation, conflict detection, cycle detection and deterministic dependency-first ordering.
 - `ModLoader` to prepare metadata-only load plans using dependency validation and ordering.
+- `NativeModule` for explicit-path shared-library loading, symbol lookup, RAII cleanup and platform error reporting.
 - Typed `EventBus` with RAII listener handles, priorities, per-event clearing and snapshot-based dispatch.
 - `HookManager` for hook metadata registration, owner tracking, target conflict checks and logical state management.
 - `PatchManager` for patch metadata, expected/replacement byte validation, address overflow checks, overlap detection and owner-based state management.
-- Unit tests for registry operations, dependency resolution, event dispatch, hook management, patch management and load-plan preparation.
+- Unit tests for registry operations, dependency resolution, event dispatch, hook management, patch management, load-plan preparation and native module loading.
+
+## NativeModule
+
+Include `<okapy/native_module.hpp>` to open a native shared library and resolve
+an exported symbol:
+
+```cpp
+okapy::NativeModule module;
+const auto result = module.load("/absolute/path/to/mod.so");
+
+if (result == okapy::NativeModuleResult::Loaded) {
+    void* entrypoint = module.symbol("okapy_mod_init");
+    // Validate the mod ABI before converting/calling the entrypoint.
+}
+```
+
+The loader uses `LoadLibraryW` on Windows and `dlopen` on Android/Linux and
+other POSIX platforms. It requires an absolute path, reports loading errors,
+and releases the library when the object is destroyed. The module must remain
+loaded for as long as any function pointer obtained from it is used.
+
+**Security warning:** loading a native library executes its code in the
+Okapy/Geometry Dash process with that process's permissions. An absolute path
+is not a trust or integrity check. Only load mods from sources you trust.
+This component does not yet verify signatures, hashes, package manifests or
+the Okapy mod ABI, and it does not sandbox native code.
 
 ## ModLoader
 
@@ -27,7 +54,7 @@ core.initialize();
 const auto plan = core.loader().prepare(core.mods(), manifests);
 if (plan.isReady()) {
     for (const auto& modId : plan.dependencies.loadOrder) {
-        // A future native backend will initialize each mod in this order.
+        // A future lifecycle layer will initialize each mod in this order.
     }
 }
 ```
@@ -38,11 +65,10 @@ version mismatches, declared conflicts, invalid versions, duplicate manifests
 and dependency cycles prevent the plan from being considered ready. An empty
 plan is not considered ready.
 
-**Safety boundary:** ModLoader currently prepares and validates metadata only.
-It does not discover files on disk, extract `.okapy` archives, load shared
-libraries, execute entrypoints, or change mod states. Native loading and
-lifecycle execution require a separate platform backend and additional
-validation before untrusted mod code can run.
+**Boundary:** ModLoader prepares and validates metadata only. It does not
+discover files, extract `.okapy` archives, execute entrypoints, or change mod
+states. NativeModule is a lower-level library primitive and is not automatically
+invoked by ModLoader.
 
 ## EventSystem
 
@@ -93,15 +119,14 @@ sequences of equal length, and an address range that does not overflow.
 Overlapping target ranges and duplicate IDs are rejected. Patches are associated
 with an owner and can be disabled by owner.
 
-**Safety boundary:** PatchManager stores and validates descriptions only.
-It does not read or write process memory, change executable pages, or apply
-patches. `setEnabled` changes only the recorded state. A platform-specific,
-permission-aware patch backend is a separate future component.
+**Boundary:** PatchManager stores and validates descriptions only. It does not
+read or write process memory, change executable pages, or apply patches.
 
 ## Not implemented yet
 
-- Reading or extracting `.okapy` archives.
-- Loading native mod libraries or applying hooks/patches.
+- Reading, validating signatures for, or extracting `.okapy` archives.
+- A stable exported mod ABI and controlled mod lifecycle.
+- Automatic native module discovery/loading from a load plan.
 - Geometry Dash/Cocos2d-x integration.
 - JNI bridge.
 - A stable public mod SDK or cross-thread event queue.
