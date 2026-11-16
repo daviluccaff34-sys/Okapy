@@ -3,6 +3,7 @@
 #include <okapy/config_store.hpp>
 #include <okapy/event_system.hpp>
 #include <okapy/hook_manager.hpp>
+#include <okapy/installed_mod_catalog.hpp>
 #include <okapy/mod_abi.hpp>
 #include <okapy/mod_lifecycle.hpp>
 #include <okapy/mod_loader.hpp>
@@ -34,6 +35,8 @@ public:
     bool initialize() noexcept;
     [[nodiscard]] bool isInitialized() const noexcept;
     [[nodiscard]] ModRegistry& mods() noexcept;
+    [[nodiscard]] InstalledModCatalog& installedMods() noexcept;
+    [[nodiscard]] const InstalledModCatalog& installedMods() const noexcept;
     [[nodiscard]] const ModRegistry& mods() const noexcept;
     [[nodiscard]] EventBus& events() noexcept;
     [[nodiscard]] const EventBus& events() const noexcept;
@@ -83,6 +86,7 @@ private:
 
     bool m_initialized = false;
     ModRegistry m_modRegistry;
+    InstalledModCatalog m_installedModCatalog{m_modRegistry};
     EventBus m_eventBus;
     std::mutex m_eventSubscriptionsMutex;
     std::unordered_map<uint64_t, EventSubscription> m_eventSubscriptions;
