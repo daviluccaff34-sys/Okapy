@@ -12,105 +12,117 @@ Android and Geometry Dash so its systems can be developed and tested separately.
 - `ModLoader` to prepare metadata-only load plans using dependency validation and ordering.
 - `NativeModule` for explicit-path shared-library loading, symbol lookup, RAII cleanup and platform error reporting.
 - `ModLifecycleManager` for ordered initialization, reverse-order shutdown, failure rollback and lifecycle status reporting.
+- Versioned C-compatible `Okapy Mod ABI v1` structures and ABI layout/callback validation.
 - Typed `EventBus` with RAII listener handles, priorities, per-event clearing and snapshot-based dispatch.
 - `HookManager` for hook metadata registration, owner tracking, target conflict checks and logical state management.
 - `PatchManager` for patch metadata, expected/replacement byte validation, address overflow checks, overlap detection and owner-based state management.
-- Unit tests for registry operations, dependency resolution, event dispatch, hook management, patch management, load-plan preparation, native module loading and lifecycle behavior.
+- Unit tests for registry operations, dependency resolution, event dispatch, hook management, patch management, load-plan preparation, native module loading, lifecycle behavior and ABI validation.
+
+## Okapy Mod ABI v1
+
+Mod authors include the C-compatible header `<okapy/mod_abi.h>` and export
+`okapy_mod_query`. The query function receives the requested ABI version and
+the host API, then returns a versioned table of callbacks and fills metadata:
+
+```cpp
+#define OKAPY_MOD_BUILD
+#include <okapy/mod_abi.h>
+
+static int32_t mod_initialize(
+    void* context, const OkapyHostApiV1* host) {
+    if (host && host->log) {
+        host->log(host->host_context, 1, "Hello from my mod");
+    }
+    return 1;
+}
+
+static void mod_shutdown(void* context) {
+    // Release mod-owned resources.
+}
+
+static const OkapyModApiV1 api = {
+    sizeof(OkapyModApiV1),
+    OKAPY_MOD_ABI_VERSION_1,
+    nullptr,
+    mod_initialize,
+    mod_shutdown
+};
+
+extern "C" OKAPY_MOD_EXPORT const OkapyModApiV1* okapy_mod_query(
+    uint32_t requested_abi,
+    const OkapyHostApiV1* host,
+    OkapyModInfoV1* out_info) {
+    if (requested_abi != OKAPY_MOD_ABI_VERSION_1 || !out_info) {
+        return nullptr;
+    }
+    *out_info = {
+        sizeof(OkapyModInfoV1),
+        OKAPY_MOD_ABI_VERSION_1,
+        "author.example",
+        "Example Mod",
+        "1.0.0"
+    };
+    return &api;
+}
+```
+
+The ABI uses fixed-width integer types, opaque context pointers and C function
+pointers. It deliberately avoids passing C++ standard-library objects or
+exceptions across the shared-library boundary. `struct_size` allows future
+compatible extension; the ABI version identifies incompatible revisions.
+The returned API table and metadata strings must remain valid until the module
+is unloaded. A mod must not throw exceptions through ABI callbacks.
+
+The host-side `validateModAbi` helper checks required structure sizes,
+version values, metadata pointers and the required initializer callback. It
+does not call the query function or prove that a library is safe. The host must
+load only trusted libraries, resolve `OKAPY_MOD_QUERY_SYMBOL`, call the query
+function, validate its result, and keep the library loaded until shutdown has
+finished.
+
+**Security boundary:** native mods execute with the process's permissions and
+are not sandboxed. ABI validation is a compatibility check, not a security
+mechanism or signature verification. Do not load untrusted native code.
 
 ## ModLifecycleManager
 
 Include `<okapy/mod_lifecycle.hpp>`. The host registers callbacks only after
-validating a mod package and its ABI, then starts modules using a valid plan:
+validating a mod package and its ABI, then starts modules using a valid plan.
+Modules initialize in dependency-first order and shut down in reverse order.
+If initialization fails, the failing module's shutdown callback is attempted,
+followed by rollback of previously started modules. Callback exceptions are
+caught and recorded. The manager also shuts down remaining running modules
+when it is destroyed.
 
-```cpp
-core.lifecycle().registerModule(
-    "sample.mod",
-    [] { return true; },       // initialize
-    [] { /* shutdown */ }
-);
-
-const auto plan = core.loader().prepare(core.mods(), manifests);
-if (plan.isReady()) {
-    core.lifecycle().start(plan);
-}
-```
-
-Modules initialize in dependency-first plan order and shut down in reverse
-order. If initialization fails, the failing module's shutdown callback is
-attempted, followed by rollback of previously started modules. Exceptions from
-callbacks are caught and recorded. The manager also shuts down remaining
-running modules when it is destroyed.
-
-The lifecycle manager is currently intended for serialized calls from the
-host's main/control thread; it is not thread-safe. The host must ensure callback
-code and any native library backing it remain valid until shutdown completes.
-
-**Security boundary:** this manager invokes callbacks supplied by the host; it
-does not discover packages, verify signatures, load libraries, or establish
-that native code is trustworthy. Native libraries execute with the process's
-permissions and are not sandboxed. Do not register callbacks from untrusted
-mods before validating their package, provenance and ABI.
+The lifecycle manager is intended for serialized calls from the host's
+main/control thread; it is not thread-safe. The host must ensure callback code
+and its native library remain valid until shutdown completes.
 
 ## NativeModule
 
 Include `<okapy/native_module.hpp>` to open a native shared library and resolve
-an exported symbol:
-
-```cpp
-okapy::NativeModule module;
-const auto result = module.load("/absolute/path/to/mod.so");
-
-if (result == okapy::NativeModuleResult::Loaded) {
-    void* entrypoint = module.symbol("okapy_mod_init");
-    // Validate the mod ABI before converting/calling the entrypoint.
-}
-```
-
-The loader uses `LoadLibraryW` on Windows and `dlopen` on Android/Linux and
-other POSIX platforms. It requires an absolute path, reports loading errors,
-and releases the library when the object is destroyed. The module must remain
-loaded for as long as any function pointer obtained from it is used.
-
-**Security warning:** loading a native library executes its code in the
-Okapy/Geometry Dash process with that process's permissions. An absolute path
-is not a trust or integrity check. Only load mods from sources you trust.
-This component does not yet verify signatures, hashes, package manifests or
-the Okapy mod ABI, and it does not sandbox native code.
+an exported symbol. The loader uses `LoadLibraryW` on Windows and `dlopen` on
+Android/Linux and other POSIX platforms. It requires an absolute path, reports
+loading errors, and releases the library when the object is destroyed. The
+module must remain loaded for as long as any function pointer obtained from it
+is used. An absolute path is not a trust or integrity check.
 
 ## ModLoader
 
 Include `<okapy/mod_loader.hpp>` to prepare a dependency-safe order for enabled
-mods after their metadata and manifests have been registered:
-
-```cpp
-const auto plan = core.loader().prepare(core.mods(), manifests);
-if (plan.isReady()) {
-    // Pass the validated plan to the lifecycle layer.
-}
-```
-
-The returned plan contains the dependency report and a deterministic,
-dependency-first list of enabled mod IDs. Missing required dependencies,
-version mismatches, declared conflicts, invalid versions, duplicate manifests
-and dependency cycles prevent the plan from being considered ready. An empty
-plan is not considered ready. ModLoader does not itself execute code.
+mods after their metadata and manifests have been registered. The returned
+plan contains a dependency report and deterministic dependency-first mod IDs.
+Missing required dependencies, version mismatches, declared conflicts,
+invalid versions, duplicate manifests and dependency cycles prevent the plan
+from being ready. An empty plan is not considered ready. ModLoader does not
+itself execute code.
 
 ## EventSystem
 
-Include `<okapy/event_system.hpp>` and define an event as a normal C++ type:
-
-```cpp
-struct PlayerJoined { int playerId; };
-
-okapy::EventBus events;
-auto listener = events.subscribe<PlayerJoined>(
-    [](const PlayerJoined& event) { /* React to event. */ }, 10);
-events.publish(PlayerJoined{42});
-```
-
-Subscriptions return move-only `ListenerHandle` objects. Destroying or resetting
-a handle unsubscribes it. Dispatch uses a listener snapshot; callbacks execute
-synchronously on the publishing thread.
+Include `<okapy/event_system.hpp>`. Subscriptions return move-only
+`ListenerHandle` objects. Destroying or resetting a handle unsubscribes it.
+Dispatch uses a listener snapshot; callbacks execute synchronously on the
+publishing thread.
 
 ## HookManager
 
@@ -124,27 +136,20 @@ State changes are metadata only; no detour is installed.
 Include `<okapy/patch_manager.hpp>` to register patch descriptions. Each patch
 requires a non-zero target, non-empty expected and replacement byte sequences
 of equal length, and an address range that does not overflow. Overlapping
-target ranges and duplicate IDs are rejected.
-
-**Boundary:** PatchManager stores and validates descriptions only. It does not
-read or write process memory, change executable pages, or apply patches.
+target ranges and duplicate IDs are rejected. It stores metadata only and does
+not read or write process memory.
 
 ## Not implemented yet
 
 - Reading, validating signatures for, or extracting `.okapy` archives.
-- A stable exported mod ABI and controlled native module discovery/loading.
-- Automatic connection between package metadata, NativeModule and lifecycle.
-- Geometry Dash/Cocos2d-x integration.
-- JNI bridge.
-- A stable public mod SDK or cross-thread event queue.
+- Automatic connection between package metadata, NativeModule, ABI query and lifecycle.
+- A stable public mod SDK and cross-thread event queue.
+- Geometry Dash/Cocos2d-x integration and JNI bridge.
+- Actual hook installation or memory patch application.
 
-The registry and dependency manager store and analyze metadata only. The
-dependency manager reports missing required dependencies, incompatible minimum
-versions, declared conflicts, malformed versions, duplicate manifests and
-dependency cycles. A load order is returned only when the graph has no reported
-errors. Missing optional dependencies are ignored. Versions currently use strict
-`MAJOR.MINOR.PATCH` syntax; prerelease/build metadata and version ranges are
-not supported yet.
+The registry and dependency manager store and analyze metadata only. Dependency
+versions currently use strict `MAJOR.MINOR.PATCH` syntax; prerelease/build
+metadata and version ranges are not supported yet.
 
 ## Build
 
