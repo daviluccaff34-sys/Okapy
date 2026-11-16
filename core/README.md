@@ -10,11 +10,10 @@ Android and Geometry Dash so its systems can be developed and tested separately.
 - Thread-safe in-memory `ModRegistry`.
 - `DependencyManager` for enabled-mod dependency validation, conflict detection, cycle detection and deterministic dependency-first ordering.
 - Typed `EventBus` with RAII listener handles, priorities, per-event clearing and snapshot-based dispatch.
+- `HookManager` for hook metadata registration, owner tracking, target conflict checks and logical state management.
 - Numeric `MAJOR.MINOR.PATCH` minimum-version checks (inclusive).
 - Mod metadata record: ID, name, version, developer, package path and state.
-- ID validation (lowercase letters, digits, underscore, hyphen and at most one dot).
-- Duplicate-ID rejection, lookup, state changes, removal and sorted listing.
-- Unit tests for registry operations, dependency resolution and event dispatch.
+- Unit tests for registry operations, dependency resolution, event dispatch and hook metadata management.
 
 ## EventSystem
 
@@ -40,8 +39,23 @@ Subscriptions return move-only `ListenerHandle` objects. Destroying or resetting
 a handle unsubscribes it. Dispatch uses a listener snapshot, so callbacks may
 subscribe or unsubscribe without holding the bus mutex. Listeners are called
 synchronously on the thread that publishes the event; callback exceptions
-propagate to the publisher. A listener already executing cannot be forcibly
-stopped by resetting its handle from another thread.
+propagate to the publisher.
+
+## HookManager
+
+Include `<okapy/hook_manager.hpp>` to register hook descriptions:
+
+```cpp
+okapy::HookManager hooks;
+hooks.add({"sample.update", "sample.mod", 0x1000, 0x2000});
+hooks.setEnabled("sample.update", true);
+```
+
+The manager validates IDs and addresses, rejects duplicate hook IDs and
+multiple registrations for the same target, tracks the owning mod, and can
+disable all logically enabled hooks belonging to one owner. Its state is
+metadata only: `setEnabled` does not install a detour or modify executable
+memory. Real platform-specific hook backends are a later integration task.
 
 ## Not implemented yet
 
@@ -59,8 +73,9 @@ errors. Missing optional dependencies are ignored. Versions currently use strict
 `MAJOR.MINOR.PATCH` syntax; prerelease/build metadata and version ranges are
 not supported yet.
 
-The EventBus dispatches typed C++ events but does not execute mod code by itself,
-load native libraries or modify game memory.
+The EventBus dispatches typed C++ events but does not execute mod code by itself.
+The HookManager tracks hook descriptions and requested states, but does not
+redirect function calls, patch bytes or modify game memory.
 
 ## Build
 
