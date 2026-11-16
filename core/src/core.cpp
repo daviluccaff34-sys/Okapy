@@ -68,7 +68,8 @@ int32_t Core::eventPublishCallback(void* context, const char* eventName,
 int32_t Core::subscribeEvent(const char* eventName,
     OkapyEventCallbackV1 callback, void* userData,
     uint64_t* outToken) noexcept {
-    if (!eventName || !*eventName || !callback || !outToken)
+    if (!eventName || !*eventName || !callback || !outToken ||
+        std::char_traits<char>::length(eventName) > 256)
         return OKAPY_EVENT_INVALID_ARGUMENT;
     try {
         const auto token = m_nextEventToken.fetch_add(1, std::memory_order_relaxed);
@@ -86,7 +87,8 @@ int32_t Core::subscribeEvent(const char* eventName,
             });
         {
             std::lock_guard<std::mutex> lock(m_eventSubscriptionsMutex);
-            m_eventSubscriptions.emplace(token, std::move(handle));
+            m_eventSubscriptions.emplace(token,
+                EventSubscription{eventName, std::move(handle)});
         }
         *outToken = token;
         return OKAPY_EVENT_OK;
@@ -101,7 +103,7 @@ int32_t Core::unsubscribeEvent(uint64_t token) noexcept {
         std::lock_guard<std::mutex> lock(m_eventSubscriptionsMutex);
         const auto found = m_eventSubscriptions.find(token);
         if (found == m_eventSubscriptions.end()) return OKAPY_EVENT_NOT_FOUND;
-        found->second.reset();
+        found->second.handle.reset();
         m_eventSubscriptions.erase(found);
         return OKAPY_EVENT_OK;
     } catch (...) {
@@ -111,10 +113,20 @@ int32_t Core::unsubscribeEvent(uint64_t token) noexcept {
 
 int32_t Core::publishEvent(const char* eventName, const char* payload,
     uint32_t* outListenerCount) noexcept {
-    if (!eventName || !*eventName || !payload)
+    if (!eventName || !*eventName || !payload ||
+        std::char_traits<char>::length(eventName) > 256 ||
+        std::char_traits<char>::length(payload) > 1024 * 1024)
         return OKAPY_EVENT_INVALID_ARGUMENT;
     try {
-        const auto count = m_eventBus.publish(ModEvent{eventName, payload});
+        std::size_t matchingListeners = 0;
+        {
+            std::lock_guard<std::mutex> lock(m_eventSubscriptionsMutex);
+            for (const auto& item : m_eventSubscriptions) {
+                if (item.second.eventName == eventName) ++matchingListeners;
+            }
+        }
+        m_eventBus.publish(ModEvent{eventName, payload});
+        const auto count = matchingListeners;
         if (outListenerCount) {
             *outListenerCount = count > std::numeric_limits<uint32_t>::max()
                 ? std::numeric_limits<uint32_t>::max()
