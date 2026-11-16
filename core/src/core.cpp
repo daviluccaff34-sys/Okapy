@@ -51,4 +51,12 @@ const ModLoader& Core::loader() const noexcept {
     return m_modLoader;
 }
 
+ModLifecycleManager& Core::lifecycle() noexcept {
+    return m_lifecycleManager;
+}
+
+const ModLifecycleManager& Core::lifecycle() const noexcept {
+    return m_lifecycleManager;
+}
+
 } // namespace okapy
