@@ -13,6 +13,23 @@ Okapy has two user-facing surfaces:
 
 The launcher is not intended to become a full external mod store. Its primary job is to start the game and provide settings and recovery options. The in-game interface is the main mod-management experience.
 
+## Core technical requirement: direct Cocos2d-x integration
+
+Okapy must integrate directly into the Cocos2d-x runtime used by Geometry Dash. The in-game interface is to be made from native Cocos2d-x scene-graph objects (such as nodes, layers, menus, and event handlers), created and managed inside the game's own process and rendering lifecycle.
+
+This is not an Android overlay, floating window, WebView, or separate screen drawn above the game. It must behave as part of the game UI and participate in the Cocos2d-x scene and event systems.
+
+To achieve this, Okapy will need an independently implemented native integration layer:
+- A runtime bootstrap that becomes active in the Geometry Dash process.
+- A Cocos2d-x adapter for creating, attaching, updating, and removing Okapy UI nodes on the correct thread and lifecycle.
+- A game-integration layer that connects selected game screens and actions to the Okapy interface.
+- A hook/patch backend for carefully researched integration points where ordinary Cocos2d-x APIs are insufficient.
+- A version/ABI compatibility layer so game-specific integration is not scattered through Core.
+
+The exact Cocos2d-x version, available symbols, binary interfaces, game classes, hook points, and initialization order must be verified for each supported Geometry Dash build. Do not guess class layouts, offsets, symbols, or patch bytes. Do not assume that integrating with Cocos2d-x alone automatically exposes every Geometry Dash-specific feature.
+
+Geode is a public architectural reference for this direct in-process integration approach. Okapy must implement its own bootstrap, Cocos adapter, hook backend, APIs, and UI. No Geode code, assets, SDK declarations, internal names, or package format may be copied.
+
 ## Components
 
 ### 1. Android launcher
@@ -27,7 +44,7 @@ The current launcher is a basic Android Activity that detects and opens the game
 
 ### 2. Okapy in-game interface
 
-A native interface rendered inside the running Geometry Dash game.
+A native interface rendered inside the running Geometry Dash game through Cocos2d-x.
 
 Planned capabilities:
 - Browse available mods from a configured catalog.
@@ -39,7 +56,7 @@ Planned capabilities:
 - Explain missing dependencies, conflicts, and incompatible game versions.
 - Offer a recovery route to disable problematic mods on the next launch.
 
-This interface depends on Okapy Core and a working integration with the game's rendering and lifecycle. It cannot be implemented as a normal Android screen layered over the launcher; it must be integrated into the game process and UI.
+The interface must use Cocos2d-x objects in the game's own scene graph and lifecycle. It must not be implemented as a native Android Activity, overlay, floating window, or WebView.
 
 ### 3. Okapy Core
 
@@ -53,8 +70,9 @@ Proposed internal services:
 - **DependencyPlanner:** checks required dependencies, version constraints, and conflicts before activation.
 - **ModLifecycle:** controls discovery, preparation, activation, failure, and deactivation.
 - **NativeModuleBackend:** platform-specific native-library loading behind an interface.
+- **CocosAdapter:** creates and manages Okapy's native Cocos2d-x UI and dispatches work to the correct engine thread.
+- **GameIntegration:** provides game-specific entry points and UI integration.
 - **HookBackend:** a replaceable integration layer; no hook implementation is selected yet.
-- **InGameUiBridge:** connects Core services to the game's native UI layer.
 - **ResourceService:** exposes mod-owned resources through controlled paths.
 - **ConfigService:** stores per-mod settings and persistent data.
 - **DiagnosticService:** records startup phases, mod errors, and crash context.
@@ -101,15 +119,16 @@ Downloaded packages must never be executed before validation and an explicit use
 4. **Planning:** dependencies, conflicts, enabled state, and compatibility are evaluated as a complete plan.
 5. **Preparation:** required files and resources are checked and runtime services are initialized.
 6. **Activation:** eligible native modules are loaded in dependency order; each activation is tracked independently.
-7. **Running:** the in-game interface, runtime events, and diagnostics are available.
-8. **Failure recovery:** a failed mod is isolated where possible; the next launch can use safe mode to skip third-party modules.
-9. **Shutdown:** runtime-owned resources and diagnostics are finalized.
+7. **Cocos integration:** the Cocos adapter becomes ready on the engine thread; the in-game interface is attached to the appropriate game scene/layer.
+8. **Running:** the in-game interface, runtime events, and diagnostics are available.
+9. **Failure recovery:** a failed mod is isolated where possible; the next launch can use safe mode to skip third-party modules.
+10. **Shutdown:** runtime-owned resources and diagnostics are finalized.
 
 No implementation should assume that unloading arbitrary native code is always safe. The first runtime may support disabling a mod for the next launch rather than unloading it live.
 
 ## Android integration: unresolved engineering gate
 
-The current launcher only opens the installed game with a normal Android launch Intent. That cannot, by itself, load a native mod runtime into the game's process or provide an in-game interface.
+The current launcher only opens the installed game with a normal launch Intent. That cannot, by itself, load a native mod runtime into the game's process or provide direct Cocos2d-x integration.
 
 A future Android integration must be researched and prototyped independently. It may require an Android host Activity, JNI, NDK-built libraries, and a compatible way to initialize the game's native engine and UI. This is a major technical gate: do not implement guessed library names, offsets, patches, or version assumptions. Do not modify the game installation until the integration method, compatibility constraints, and recovery path are understood and tested.
 
@@ -133,8 +152,8 @@ Okapy uses Geode as a public technical reference for understanding the problem s
 
 - Android launcher foundation, game detection, and ordinary launch Intent: implemented; physical-device verification remains.
 - Okapy home screen matching the intended layout: not implemented.
-- In-game interface and repository browser: not implemented.
+- Direct Cocos2d-x integration, Cocos adapter, and native in-game interface: not implemented.
 - .okapy ZIP/manifest validator: initial implementation exists; not yet built or tested.
 - .okapy extraction installer: initial implementation exists; not yet built or tested; intended to be called by in-game install flow.
 - Repository client, dependency planner, native Core, JNI bridge, SDK, hook backend, and native loading: not implemented.
-- Android game-host and in-game UI integration: not selected or implemented.
+- Android game-host and Cocos2d-x integration details: not selected or implemented; requires research against supported game binaries/builds.
