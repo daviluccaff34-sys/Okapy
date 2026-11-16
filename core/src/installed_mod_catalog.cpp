@@ -50,6 +50,10 @@ CatalogResult InstalledModCatalog::update(ModInfo mod, ModManifest manifest) {
     const auto found = m_manifests.find(mod.id);
     if (found == m_manifests.end()) return CatalogResult::NotFound;
 
+    const auto current = m_registry.find(mod.id);
+    if (!current) return CatalogResult::NotFound;
+    if (current->state == ModState::Enabled) return CatalogResult::ModEnabled;
+
     // Updating a package returns it to Installed; it must be explicitly enabled again.
     mod.state = ModState::Installed;
     if (!m_registry.replace(mod)) return CatalogResult::NotFound;
@@ -62,6 +66,11 @@ CatalogResult InstalledModCatalog::uninstall(std::string_view modId) {
     std::lock_guard<std::mutex> lock(m_mutex);
     const auto found = m_manifests.find(std::string(modId));
     if (found == m_manifests.end()) return CatalogResult::NotFound;
+
+    const auto current = m_registry.find(modId);
+    if (!current) return CatalogResult::NotFound;
+    if (current->state == ModState::Enabled) return CatalogResult::ModEnabled;
+
     if (!m_registry.remove(modId)) return CatalogResult::NotFound;
     m_manifests.erase(found);
     return CatalogResult::Removed;
