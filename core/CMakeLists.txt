@@ -27,4 +27,8 @@ if(BUILD_TESTING)
     add_executable(okapy_dependency_tests tests/test_dependency_manager.cpp)
     target_link_libraries(okapy_dependency_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_dependency_tests COMMAND okapy_dependency_tests)
+
+    add_executable(okapy_event_tests tests/test_event_system.cpp)
+    target_link_libraries(okapy_event_tests PRIVATE Okapy::Core)
+    add_test(NAME okapy_event_tests COMMAND okapy_event_tests)
 endif()
