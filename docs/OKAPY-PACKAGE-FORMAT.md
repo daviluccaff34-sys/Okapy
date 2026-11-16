@@ -2,7 +2,7 @@
 
 **Status:** Draft 0.1 — specification draft; initial Android validation and extraction implementations exist but have not yet been built or tested.
 
-This document defines the first proposed structure for Okapy mod packages. The format must remain explicit, inspectable, and versioned so the launcher can reject packages it cannot safely understand.
+This document defines the first proposed structure for Okapy mod packages. The format must remain explicit, inspectable, and versioned so the in-game Okapy interface can reject packages it cannot safely understand.
 
 ## 1. Container
 
@@ -65,9 +65,9 @@ The exact version-constraint syntax and dependency-resolution rules still need a
 
 ## 3. Validation and installation requirements
 
-Before a package can be installed, Okapy must:
+Before installation, Okapy Core must:
 
-1. Check that the file is a valid ZIP and that it contains one root okapy.json.
+1. Check that the downloaded file is a valid ZIP and that it contains one root okapy.json.
 2. Parse JSON and reject unknown or unsupported formatVersion values.
 3. Validate required fields, identifier syntax, and version strings.
 4. Ensure every entrypoint path refers to a file inside the archive.
@@ -75,18 +75,16 @@ Before a package can be installed, Okapy must:
 6. Enforce package entry-count and expanded-size limits while reading actual bytes.
 7. Check game ID/version and device ABI compatibility.
 8. Detect duplicate mod IDs and unresolved dependencies/conflicts before activation.
-9. Verify file hashes when package integrity metadata is added to a later revision.
+9. Verify file hashes against repository metadata or signed package metadata before installation.
 
-A package must never be loaded merely because its extension is .okapy.
+The in-game interface must show package details and obtain the player's confirmation before installing or enabling native code. A package must never be loaded merely because its extension is .okapy.
 
 ## 4. Security and trust
 
-Native mod libraries are executable code. Installing or enabling a mod must require clear user consent. The installer currently only extracts files after validation; the launcher UI must provide the user-facing confirmation before calling it. Okapy must not describe a mod as safe merely because its manifest is valid.
-
-The design still needs a trust/signing model, permission model, and a safe way to disable a mod that prevents startup.
+Native mod libraries are executable code. Installing or enabling a mod must require clear user consent. Okapy must not describe a mod as safe merely because its manifest is valid. The design still needs a trust/signing model, permission model, and a safe way to disable a mod that prevents startup.
 
 ## 5. Compatibility and implementation status
 
 This is a draft for discussion and implementation planning. It is not yet a stable public specification. Field names, ABI support, signing, dependency constraints, and the native loading contract may change before the first Beta.
 
-The initial Android archive/manifest validator is in `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyPackageValidator.kt`. The initial extraction installer is in `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyPackageInstaller.kt`. The validator checks ZIP structure, manifest fields, game compatibility, ABI entrypoint, dependency/conflict ID syntax, and unsafe paths. The installer revalidates, extracts into a temporary private directory, checks normalized paths and size limits, and then renames the staging directory into place. Neither implementation has been built or tested. The installer is not yet connected to the launcher UI. Dependency resolution, package signing, and native loading are not implemented.
+The initial Android archive/manifest validator is in `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyPackageValidator.kt`. The initial extraction installer is in `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyPackageInstaller.kt`. The validator checks ZIP structure, manifest fields, game compatibility, ABI entrypoint, dependency/conflict ID syntax, and unsafe paths. The installer revalidates, extracts into a temporary private directory, checks normalized paths and size limits, and then renames the staging directory into place. Neither implementation has been built or tested. The installer is intended to be called by the in-game installation flow, but that interface does not exist yet. Dependency resolution, package signing, repository downloads, and native loading are not implemented.
