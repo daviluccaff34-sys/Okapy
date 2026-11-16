@@ -19,4 +19,12 @@ const ModRegistry& Core::mods() const noexcept {
     return m_modRegistry;
 }
 
+EventBus& Core::events() noexcept {
+    return m_eventBus;
+}
+
+const EventBus& Core::events() const noexcept {
+    return m_eventBus;
+}
+
 } // namespace okapy
