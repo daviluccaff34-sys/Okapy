@@ -71,6 +71,8 @@ void testClear() {
         [&calls](const TextEvent&) { ++calls; });
 
     bus.clear<NumberEvent>();
+    assert(!number.isActive());
+    assert(text.isActive());
     assert(bus.listenerCount() == 1);
     assert(bus.publish(NumberEvent{1}) == 0);
     assert(bus.publish(TextEvent{"ok"}) == 1);
