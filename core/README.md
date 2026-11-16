@@ -1,26 +1,26 @@
 # Okapy Core
 
-The native foundation of Okapy is written in C++17. It is deliberately kept
-independent of Android and Geometry Dash so core systems can be developed and
-tested without loading the game.
+The native foundation of Okapy is written in C++17 and kept independent from
+Android and Geometry Dash so its systems can be developed and tested separately.
 
-## Current status
+## Implemented
 
-- Initial CMake target: `Okapy::Core`.
-- Public core identity and version constants.
-- Minimal initialization state.
+- CMake target: `Okapy::Core`.
+- Core identity/version constants and initialization state.
+- Thread-safe in-memory `ModRegistry`.
+- Mod metadata record: ID, name, version, developer, package path and state.
+- ID validation (lowercase letters, digits, underscore, hyphen and at most one dot).
+- Duplicate-ID rejection, lookup, state changes, removal and sorted listing.
 
-## Planned modules
+## Not implemented yet
 
-- Package metadata and secure `.okapy` archive inspection.
-- Installed mod registry.
-- Dependency and incompatibility resolution.
-- Event dispatch system.
-- Runtime lifecycle and native integration.
-- JNI bridge to the Android launcher.
+- Reading or extracting `.okapy` archives.
+- Dependency resolution.
+- Loading native mod libraries or applying hooks/patches.
+- Geometry Dash/Cocos2d-x integration.
+- JNI bridge.
 
-No mod binaries are loaded and no Geometry Dash memory is modified by this
-initial foundation.
+The registry stores metadata only. It does not execute mod code or modify game memory.
 
 ## Build
 
