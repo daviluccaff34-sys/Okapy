@@ -26,7 +26,7 @@ Responsibilities:
 - Maintain enabled/disabled selections and launch preferences.
 - Provide normal launch, safe launch, diagnostics, and recovery entry points.
 
-The current launcher is a basic Android Activity that detects and opens the game through Android's package manager. It does not host the game process, integrate native libraries, install mods, or load Okapy Core.
+The current launcher is a basic Android Activity that detects and opens the game through Android's package manager. It does not host the game process, integrate native libraries, or load Okapy Core. An initial extraction installer exists but is not connected to the launcher UI.
 
 ### 2. Okapy Core
 
@@ -101,8 +101,8 @@ Okapy uses Geode as a public technical reference for understanding the problem s
 
 ## Current implementation status
 
-- Android launcher foundation: implemented, not yet verified on a physical device in this work session.
-- Game detection and ordinary launch Intent: implemented.
+- Android launcher foundation, game detection, and ordinary launch Intent: implemented; physical-device verification remains.
 - .okapy ZIP/manifest validator: initial implementation exists; not yet built or tested.
-- Native Core, JNI bridge, dependency planner, installer, SDK, hook backend, and native loading: not implemented.
+- .okapy extraction installer: initial implementation exists; not yet built or tested and not yet connected to the UI.
+- Native Core, JNI bridge, dependency planner, SDK, hook backend, and native loading: not implemented.
 - Android game-host integration: not selected or implemented.
