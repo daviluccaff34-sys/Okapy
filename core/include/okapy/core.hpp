@@ -1,5 +1,6 @@
 #pragma once
 
+#include <okapy/config_store.hpp>
 #include <okapy/event_system.hpp>
 #include <okapy/hook_manager.hpp>
 #include <okapy/mod_abi.hpp>
@@ -29,6 +30,9 @@ public:
     [[nodiscard]] const PatchManager& patches() const noexcept;
     [[nodiscard]] ModLoader& loader() noexcept;
     [[nodiscard]] const ModLoader& loader() const noexcept;
+    [[nodiscard]] ConfigStore& config() noexcept;
+    [[nodiscard]] const ConfigStore& config() const noexcept;
+    [[nodiscard]] OkapyHostApiV1 hostApi() noexcept;
     [[nodiscard]] NativeModLoader& nativeMods() noexcept;
     [[nodiscard]] const NativeModLoader& nativeMods() const noexcept;
     [[nodiscard]] ModLifecycleManager& lifecycle() noexcept;
@@ -40,6 +44,7 @@ private:
     HookManager m_hookManager;
     PatchManager m_patchManager;
     ModLoader m_modLoader;
+    ConfigStore m_configStore;
     NativeModLoader m_nativeModLoader;
     // Lifecycle is destroyed before NativeModLoader so callbacks run while libraries remain loaded.
     ModLifecycleManager m_lifecycleManager;
