@@ -27,4 +27,12 @@ const EventBus& Core::events() const noexcept {
     return m_eventBus;
 }
 
+HookManager& Core::hooks() noexcept {
+    return m_hookManager;
+}
+
+const HookManager& Core::hooks() const noexcept {
+    return m_hookManager;
+}
+
 } // namespace okapy
