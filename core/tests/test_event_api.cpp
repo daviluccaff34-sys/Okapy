@@ -35,7 +35,7 @@ int main() {
     assert(invoked == 1);
     assert(callbackCount == 1);
     assert(receivedName == "player.died");
-    assert(receivedPayload == "{\\"attempt\\":3}");
+    assert(receivedPayload == R"({"attempt":3})");
 
     assert(host.event_publish(host.host_context, "level.completed",
         "{}", &invoked) == OKAPY_EVENT_OK);
