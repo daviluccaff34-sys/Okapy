@@ -8,6 +8,8 @@ namespace okapy {
 bool Core::initialize() noexcept { m_initialized = true; return true; }
 bool Core::isInitialized() const noexcept { return m_initialized; }
 ModRegistry& Core::mods() noexcept { return m_modRegistry; }
+InstalledModCatalog& Core::installedMods() noexcept { return m_installedModCatalog; }
+const InstalledModCatalog& Core::installedMods() const noexcept { return m_installedModCatalog; }
 const ModRegistry& Core::mods() const noexcept { return m_modRegistry; }
 EventBus& Core::events() noexcept { return m_eventBus; }
 const EventBus& Core::events() const noexcept { return m_eventBus; }
