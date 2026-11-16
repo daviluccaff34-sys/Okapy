@@ -40,6 +40,7 @@ public:
 
     RegistryResult add(ModInfo mod);
     bool remove(std::string_view id);
+    bool replace(ModInfo mod);
     bool setState(std::string_view id, ModState state);
 
     [[nodiscard]] std::optional<ModInfo> find(std::string_view id) const;
