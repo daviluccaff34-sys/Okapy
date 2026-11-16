@@ -3,7 +3,6 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
-#include <string>
 
 int main() {
     namespace fs = std::filesystem;
@@ -28,7 +27,7 @@ int main() {
     assert(store.root() == fs::canonical(root).string());
     assert(store.listPackageIds().size() == 1);
     assert(store.listPackageIds().front() == "example.mod");
-    assert(!store.packagePath("../outside").size());
+    assert(store.packagePath("../outside").empty());
 
     okapy::ModInfo info{
         "example.mod", "Example", "1.0.0", "Test author", "",
