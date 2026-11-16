@@ -87,7 +87,7 @@ std::vector<ModInfo> ModRegistry::list() const {
     return result;
 }
 
-std::size_t ModRegistry::size() const noexcept {
+std::size_t ModRegistry::size() const {
     std::shared_lock lock(m_mutex);
     return m_mods.size();
 }
