@@ -70,11 +70,16 @@ private:
     int32_t publishEvent(const char* eventName, const char* payload,
         uint32_t* outListenerCount) noexcept;
 
+    struct EventSubscription {
+        std::string eventName;
+        ListenerHandle handle;
+    };
+
     bool m_initialized = false;
     ModRegistry m_modRegistry;
     EventBus m_eventBus;
     std::mutex m_eventSubscriptionsMutex;
-    std::unordered_map<uint64_t, ListenerHandle> m_eventSubscriptions;
+    std::unordered_map<uint64_t, EventSubscription> m_eventSubscriptions;
     std::atomic<uint64_t> m_nextEventToken{1};
     HookManager m_hookManager;
     PatchManager m_patchManager;
