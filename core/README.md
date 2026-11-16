@@ -6,6 +6,7 @@ The native foundation of Okapy is written in C++17 and kept independent from And
 
 - CMake target: `Okapy::Core`.
 - Thread-safe in-memory `ModRegistry` and dependency validation/order planning.
+- Persistent `ConfigStore` with per-mod namespaces, bounded binary files and Host API callbacks.
 - `NativeModule` for explicit-path shared-library loading and symbol lookup.
 - Versioned C-compatible `Okapy Mod ABI v1` structures and validation, including host logging, game information and per-mod configuration service callbacks.
 - `NativeModLoader` to resolve the ABI entry point, validate metadata and register native callbacks with the lifecycle manager.
@@ -26,6 +27,21 @@ The loader opens the library, resolves `OKAPY_MOD_QUERY_SYMBOL`, calls the query
 
 This is an explicit-path native loader, not a `.okapy` package installer. It does not discover packages, extract archives, verify signatures or hashes, or decide which mods should be enabled. The caller must validate package provenance and trust before loading.
 
+## Persistent configuration
+
+Include `<okapy/config_store.hpp>` or access the store through `Core::config()`. Select a writable application-owned directory before loading mods:
+
+```cpp
+okapy::Core core;
+core.config().setStorageDirectory(appDataDirectory / "mod-config");
+const auto host = core.hostApi();
+core.nativeMods().load(libraryPath, core.lifecycle(), host);
+```
+
+The returned Host API table exposes `config_get` and `config_set`; other optional callbacks, including logging and game information, remain null in this configuration-only table. The `ConfigStore` object is owned by `Core` and remains alive while its native mods are shut down. Standalone users can construct a `ConfigStore` with a directory and call `set`, `get`, `erase` and `clearMod` directly.
+
+Each mod ID gets its own `.okcfg` file. Values are UTF-8 strings; keys are limited to 256 bytes, values to 64 KiB, and each mod can store up to 4096 entries. The binary format is versioned. Writes use a temporary file followed by rename, and failed writes restore the previous in-memory value. This is persistence and namespace separation, not encryption: mods execute in-process and must be treated as trusted code.
+
 ## Okapy Mod ABI v1 and Host API
 
 Mod authors include `<okapy/mod_abi.h>` and export `okapy_mod_query`. The query function receives the requested ABI version and host API, returns a versioned callback table and fills mod metadata. The same host API pointer is supplied to the mod's `initialize` callback.
@@ -34,7 +50,7 @@ Host API v1 defines optional C-compatible services:
 
 - `log`: send a UTF-8 diagnostic message with a debug/info/warning/error level.
 - `get_game_info`: ask the host for game ID, game version, platform and architecture.
-- `config_get` / `config_set`: read and write UTF-8 string values in a namespace belonging to the calling mod ID. `config_get` reports the required buffer size and distinguishes missing keys from undersized buffers.
+- `config_get` / `config_set`: read and write UTF-8 string values in a namespace belonging to the mod ID supplied by the host callback. `config_get` reports the required buffer size and distinguishes missing keys from undersized buffers. The Core-provided table currently implements these two callbacks; logging and game-info callbacks are left null.
 
 A null callback means that service is unavailable. The host application must provide the callback implementations and manage their backing data; the ABI only defines the stable boundary and does not silently invent a config store or game version. Returned game-info strings are borrowed and must remain valid for the duration documented by the host callback. Services must validate mod IDs/keys and handle untrusted input. Event subscriptions and cross-thread event delivery are not part of ABI v1.
 
