@@ -21,6 +21,7 @@ enum class ModLifecycleState {
 };
 
 enum class LifecycleResult {
+    Registered,
     Started,
     AlreadyRunning,
     InvalidId,
@@ -42,6 +43,12 @@ class ModLifecycleManager final {
 public:
     using Initializer = std::function<bool()>;
     using Shutdown = std::function<void()>;
+
+    ModLifecycleManager() = default;
+    ~ModLifecycleManager();
+
+    ModLifecycleManager(const ModLifecycleManager&) = delete;
+    ModLifecycleManager& operator=(const ModLifecycleManager&) = delete;
 
     // Callbacks are supplied by the host after validating the mod and its ABI.
     LifecycleResult registerModule(
