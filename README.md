@@ -1,34 +1,36 @@
 # Okapy
 
-Launcher e futuro mod loader para Geometry Dash.
+Independent launcher and future mod-loading platform for Geometry Dash.
 
-## Sobre
+## About
 
-O Okapy é um projeto independente para iniciar e carregar/gerenciar mods do Geometry Dash. O formato planejado para pacotes de mods é `.okapy`.
+Okapy is being developed as its own platform, with an Android launcher, a native runtime (Okapy Core), a developer SDK, and the .okapy mod package format. Geode is used as a public architectural reference for studying the problem space; Okapy's implementation, code, APIs, package rules, and identity are independent.
 
-## Versão
+## Version
 
-A versão inicial de desenvolvimento é **0.00.1**. A primeira versão Beta planejada será **0.01.1**. O APK só será publicado quando os recursos previstos para a respectiva versão estiverem implementados e testados.
+The initial development version is **0.00.1**. The first Beta is planned as **0.01.1**. An APK will be published only after its intended features are implemented and tested.
 
-## Estado atual
+## Current state
 
-- **Launcher Android:** primeira implementação em desenvolvimento.
-- **Detecção do Geometry Dash:** implementação inicial adicionada.
-- **Inicialização do jogo instalado:** implementação inicial adicionada.
-- **Carregamento de mods:** ainda não implementado.
-- **Formato `.okapy`:** ainda será especificado.
-- **SDK e ferramentas:** planejados.
+- Android launcher foundation: implemented.
+- Geometry Dash package detection: implemented.
+- Ordinary launch of the installed game: implemented.
+- .okapy ZIP/manifest validator: initial implementation exists, not yet built or tested.
+- Mod installation and management: not implemented.
+- Native runtime, dependency planner, and native loading: not implemented.
+- SDK and developer tooling: not implemented.
+- Android game-host integration: still under technical investigation.
 
-Consulte [o planejamento](docs/ROADMAP.md) e [o estudo de arquitetura do Geode](docs/GEODE-RESEARCH.md).
+See [the architecture design](docs/OKAPY-ARCHITECTURE.md), [package format draft](docs/OKAPY-PACKAGE-FORMAT.md), and [Geode research notes](docs/GEODE-RESEARCH.md).
 
-## Projeto Android
+## Android project
 
-O projeto Android Studio está em [launcher/android](launcher/android). Instruções de compilação estão em [launcher/README.md](launcher/README.md).
+The Android Studio project is in [launcher/android](launcher/android). Build instructions are in [launcher/README.md](launcher/README.md).
 
 ## Downloads
 
-O site oficial de downloads será hospedado separadamente no Cloudflare Pages: https://okapy.pages.dev
+The separate downloads website is planned at https://okapy.pages.dev.
 
-## Licença
+## License
 
-Este projeto está licenciado sob a licença MIT. Consulte [LICENSE](LICENSE).
+This repository is licensed under the MIT License. See [LICENSE](LICENSE).
