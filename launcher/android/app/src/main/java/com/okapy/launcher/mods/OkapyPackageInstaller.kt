@@ -35,7 +35,8 @@ object OkapyPackageInstaller {
         destinationRoot: File,
         expectedGameId: String,
         installedGameVersion: String,
-        supportedAbis: Set<String>
+        supportedAbis: Set<String>,
+        replaceExisting: Boolean = false
     ): InstallResult {
         val validation = OkapyPackageValidator.validate(
             archive = archive,
@@ -62,10 +63,14 @@ object OkapyPackageInstaller {
         if (!root.isDirectory) return failure("Mod storage path is not a directory.")
 
         val target = File(root, modId)
-        if (target.exists()) {
+        if (target.exists() && !replaceExisting) {
             return failure("A mod with this ID is already installed.")
         }
+        if (target.exists() && (!target.isDirectory || target.canonicalFile.parentFile != root)) {
+            return failure("Existing mod directory is not a safe installation target.")
+        }
 
+        val backup = File(root, ".backup-${UUID.randomUUID()}")
         val staging = File(root, ".install-${UUID.randomUUID()}")
         if (!staging.mkdir()) {
             return failure("Could not create a temporary installation directory.")
@@ -137,11 +142,17 @@ object OkapyPackageInstaller {
                 }
             }
 
-            // Staging and destination are siblings, so this rename stays on the same filesystem.
-            // The synchronized installer also prevents two in-process installs racing for one ID.
-            if (target.exists() || !staging.renameTo(target)) {
+            // Keep the previous installation until the new staging directory is complete.
+            // Both directories are siblings, so rename operations stay on one filesystem.
+            val hadPrevious = target.exists()
+            if (hadPrevious && !target.renameTo(backup)) {
+                return abort(staging, "Could not preserve the previous installation.")
+            }
+            if (!staging.renameTo(target)) {
+                if (hadPrevious) backup.renameTo(target)
                 return abort(staging, "Could not finalize the package installation.")
             }
+            if (hadPrevious) backup.deleteRecursively()
 
             return InstallResult(
                 isInstalled = true,
