@@ -2,6 +2,7 @@
 
 #include <okapy/event_system.hpp>
 #include <okapy/hook_manager.hpp>
+#include <okapy/mod_lifecycle.hpp>
 #include <okapy/mod_loader.hpp>
 #include <okapy/mod_registry.hpp>
 #include <okapy/native_module.hpp>
@@ -28,6 +29,8 @@ public:
     [[nodiscard]] const PatchManager& patches() const noexcept;
     [[nodiscard]] ModLoader& loader() noexcept;
     [[nodiscard]] const ModLoader& loader() const noexcept;
+    [[nodiscard]] ModLifecycleManager& lifecycle() noexcept;
+    [[nodiscard]] const ModLifecycleManager& lifecycle() const noexcept;
 
 private:
     bool m_initialized = false;
@@ -36,6 +39,7 @@ private:
     HookManager m_hookManager;
     PatchManager m_patchManager;
     ModLoader m_modLoader;
+    ModLifecycleManager m_lifecycleManager;
 };
 
 } // namespace okapy
