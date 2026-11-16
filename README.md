@@ -1,27 +1,30 @@
 # Okapy
 
-Mod loader e launcher para Geometry Dash.
+Launcher e futuro mod loader para Geometry Dash.
 
 ## Sobre
 
-O Okapy é um projeto para carregar e gerenciar mods do Geometry Dash, com um launcher próprio e um formato de pacote de mods chamado `.okapy`.
+O Okapy é um projeto independente para iniciar e, futuramente, carregar e gerenciar mods do Geometry Dash. O formato planejado para pacotes de mods é `.okapy`.
 
-## Recursos planejados
+## Estado atual
 
-- Launcher do Okapy.
-- Sistema de carregamento e gerenciamento de mods.
-- Formato de pacote `.okapy`.
-- Ferramentas e SDK para desenvolvimento de mods.
-- Site separado para downloads e distribuição de versões.
+- **Launcher Android:** primeira implementação em desenvolvimento.
+- **Detecção do Geometry Dash:** implementação inicial adicionada.
+- **Inicialização do jogo instalado:** implementação inicial adicionada.
+- **Carregamento de mods:** ainda não implementado.
+- **Formato `.okapy`:** ainda será especificado.
+- **SDK e ferramentas:** planejados.
 
-## Desenvolvimento
+Consulte [o planejamento](docs/ROADMAP.md) e [o estudo de arquitetura do Geode](docs/GEODE-RESEARCH.md).
 
-O projeto está em fase inicial. A arquitetura, as plataformas suportadas, as ferramentas de desenvolvimento e o formato interno dos pacotes serão definidos durante o desenvolvimento.
+## Projeto Android
+
+O projeto Android Studio está em [launcher/android](launcher/android). Instruções de compilação estão em [launcher/README.md](launcher/README.md).
 
 ## Downloads
 
-Os downloads oficiais serão disponibilizados em um site separado, hospedado na Cloudflare. O endereço será anunciado quando estiver disponível.
+O site oficial de downloads será hospedado separadamente no Cloudflare Pages: https://okapy.pages.dev
 
 ## Licença
 
-A licença do projeto ainda será definida.
+Este projeto está licenciado sob a licença MIT. Consulte [LICENSE](LICENSE).
