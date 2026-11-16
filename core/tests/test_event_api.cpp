@@ -31,7 +31,7 @@ int main() {
 
     uint32_t invoked = 0;
     assert(host.event_publish(host.host_context, "player.died",
-        "{\\"attempt\\":3}", &invoked) == OKAPY_EVENT_OK);
+        R"({"attempt":3})", &invoked) == OKAPY_EVENT_OK);
     assert(invoked == 1);
     assert(callbackCount == 1);
     assert(receivedName == "player.died");
