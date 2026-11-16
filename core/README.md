@@ -11,6 +11,7 @@ Android and Geometry Dash so its systems can be developed and tested separately.
 - Mod metadata record: ID, name, version, developer, package path and state.
 - ID validation (lowercase letters, digits, underscore, hyphen and at most one dot).
 - Duplicate-ID rejection, lookup, state changes, removal and sorted listing.
+- Unit tests for ID validation and registry operations.
 
 ## Not implemented yet
 
@@ -29,4 +30,5 @@ From the repository root:
 ```sh
 cmake -S . -B build
 cmake --build build
+ctest --test-dir build --output-on-failure
 ```
