@@ -11,6 +11,8 @@ import java.util.zip.ZipFile
  * This class installs files only. It does not resolve dependencies or execute native code.
  */
 object OkapyPackageInstaller {
+    private class InstallFailure(message: String) : Exception(message)
+
     private const val MAX_ARCHIVE_ENTRIES = 2_048
     private const val MAX_UNCOMPRESSED_BYTES = 256L * 1024L * 1024L
 
@@ -81,34 +83,34 @@ object OkapyPackageInstaller {
                     val entry = entries.nextElement()
                     entryCount++
                     if (entryCount > MAX_ARCHIVE_ENTRIES) {
-                        return abort(staging, "Package contains too many files.")
+                        throw InstallFailure("Package contains too many files.")
                     }
 
                     val normalizedPath = normalizeSafePath(entry.name, entry.isDirectory)
-                        ?: return abort(staging, "Package contains an unsafe archive path.")
+                        ?: throw InstallFailure("Package contains an unsafe archive path.")
                     if (!normalizedNames.add(normalizedPath)) {
-                        return abort(staging, "Package contains duplicate normalized paths.")
+                        throw InstallFailure("Package contains duplicate normalized paths.")
                     }
 
                     val output = File(staging, normalizedPath)
                     val canonicalOutput = output.canonicalFile
                     val stagingPrefix = staging.canonicalPath + File.separator
                     if (!canonicalOutput.path.startsWith(stagingPrefix)) {
-                        return abort(staging, "Package entry escapes the installation directory.")
+                        throw InstallFailure("Package entry escapes the installation directory.")
                     }
 
                     if (entry.isDirectory) {
                         if (output.exists() && !output.isDirectory) {
-                            return abort(staging, "Package contains a file/directory path collision.")
+                            throw InstallFailure("Package contains a file/directory path collision.")
                         }
                         if (!output.exists() && !output.mkdirs()) {
-                            return abort(staging, "Could not create a package directory.")
+                            throw InstallFailure("Could not create a package directory.")
                         }
                         continue
                     }
 
                     val parent = output.parentFile
-                        ?: return abort(staging, "Package entry has no parent directory.")
+                        ?: throw InstallFailure("Package entry has no parent directory.")
                     if (parent.exists() && !parent.isDirectory) {
                         return abort(staging, "Package contains a file/directory path collision.")
                     }
@@ -116,7 +118,7 @@ object OkapyPackageInstaller {
                         return abort(staging, "Could not create a package directory.")
                     }
                     if (output.exists()) {
-                        return abort(staging, "Package contains duplicate output paths.")
+                        throw InstallFailure("Package contains duplicate output paths.")
                     }
 
                     zip.getInputStream(entry).use { input ->
@@ -126,7 +128,7 @@ object OkapyPackageInstaller {
                                 if (count == -1) break
                                 expandedBytes += count
                                 if (expandedBytes > MAX_UNCOMPRESSED_BYTES) {
-                                    return abort(staging, "Package expands beyond the allowed size.")
+                                    throw InstallFailure("Package expands beyond the allowed size.")
                                 }
                                 stream.write(buffer, 0, count)
                             }
@@ -148,6 +150,8 @@ object OkapyPackageInstaller {
                 modVersion = validation.modVersion,
                 installedDirectory = target
             )
+        } catch (failure: InstallFailure) {
+            return abort(staging, failure.message ?: "Package installation failed.")
         } catch (_: IOException) {
             return abort(staging, "Package could not be extracted as a readable ZIP archive.")
         } catch (_: SecurityException) {
