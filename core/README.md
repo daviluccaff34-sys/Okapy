@@ -14,7 +14,7 @@ The native foundation of Okapy is written in C++17 and kept independent from And
 - Typed `EventBus`, metadata-only `HookManager` and metadata-only `PatchManager`.
 - Unit tests for core subsystems and native-loader integration.
 
-## Permission System v1
+## Installed Mod Catalog\n\n\`Core::installedMods()\` joins installed package metadata in \`ModRegistry\` with each package's dependency/conflict manifest. The host supplies already-validated metadata through \`install(ModInfo, ModManifest)\`; \`update\` replaces metadata and returns the mod to the Installed state so it must be explicitly enabled again; \`uninstall\` removes the catalog entry; \`setEnabled\` changes the registry state; and \`resolveEnabled\` checks the currently enabled set and returns dependency-first order or diagnostics. The catalog is in-memory only: it does not parse .okapy ZIP files, read installed manifests from disk, verify package signatures, or load libraries. Android/JNI synchronization is not connected yet.\n\n## Permission System v1
 
 Include `<okapy/permission_manager.hpp>` or access it through `Core::permissions()`. Permissions are deny-by-default and are granted by the host application before the mod uses a protected Host API service.
 
