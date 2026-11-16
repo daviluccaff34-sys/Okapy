@@ -4,6 +4,7 @@ add_library(okapy_core STATIC
     src/dependency_manager.cpp
     src/hook_manager.cpp
     src/patch_manager.cpp
+    src/mod_loader.cpp
 )
 
 add_library(Okapy::Core ALIAS okapy_core)
@@ -41,4 +42,8 @@ if(BUILD_TESTING)
     add_executable(okapy_patch_tests tests/test_patch_manager.cpp)
     target_link_libraries(okapy_patch_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_patch_tests COMMAND okapy_patch_tests)
+
+    add_executable(okapy_mod_loader_tests tests/test_mod_loader.cpp)
+    target_link_libraries(okapy_mod_loader_tests PRIVATE Okapy::Core)
+    add_test(NAME okapy_mod_loader_tests COMMAND okapy_mod_loader_tests)
 endif()
