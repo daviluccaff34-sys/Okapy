@@ -1,10 +1,11 @@
 add_library(okapy_core STATIC
     src/core.cpp
+    src/mod_registry.cpp
 )
 
 add_library(Okapy::Core ALIAS okapy_core)
 
- target_include_directories(okapy_core
+target_include_directories(okapy_core
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
