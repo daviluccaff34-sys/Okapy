@@ -3,7 +3,7 @@
 **Purpose:** authoritative path inventory for the current `main` branch. Update this document whenever a project file is created, removed, renamed, or moved. Before editing an existing file, fetch its current version from GitHub; do not rely on an old local copy.
 
 **Last inventory check:** 2026-11-16  
-**Tracked files at check:** 72
+**Tracked files at check:** 75
 
 ## Repository root
 
@@ -29,6 +29,7 @@
 - `core/include/okapy/event_system.hpp`
 - `core/include/okapy/hook_manager.hpp`
 - `core/include/okapy/installed_mod_catalog.hpp`
+- `core/include/okapy/installed_package_store.hpp`
 - `core/include/okapy/mod_abi.h`
 - `core/include/okapy/mod_abi.hpp`
 - `core/include/okapy/mod_lifecycle.hpp`
@@ -46,6 +47,7 @@
 - `core/src/dependency_manager.cpp`
 - `core/src/hook_manager.cpp`
 - `core/src/installed_mod_catalog.cpp`
+- `core/src/installed_package_store.cpp`
 - `core/src/mod_abi.cpp`
 - `core/src/mod_lifecycle.cpp`
 - `core/src/mod_loader.cpp`
@@ -64,6 +66,7 @@
 - `core/tests/test_event_system.cpp`
 - `core/tests/test_hook_manager.cpp`
 - `core/tests/test_installed_mod_catalog.cpp`
+- `core/tests/test_installed_package_store.cpp`
 - `core/tests/test_mod_abi.cpp`
 - `core/tests/test_mod_lifecycle.cpp`
 - `core/tests/test_mod_loader.cpp`
