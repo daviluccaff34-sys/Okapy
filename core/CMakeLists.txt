@@ -1,5 +1,6 @@
 add_library(okapy_core STATIC
     src/core.cpp
+    src/config_store.cpp
     src/mod_registry.cpp
     src/dependency_manager.cpp
     src/hook_manager.cpp
@@ -53,6 +54,9 @@ if(BUILD_TESTING)
     add_executable(okapy_mod_lifecycle_tests tests/test_mod_lifecycle.cpp)
     target_link_libraries(okapy_mod_lifecycle_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_mod_lifecycle_tests COMMAND okapy_mod_lifecycle_tests)
+    add_executable(okapy_config_store_tests tests/test_config_store.cpp)
+    target_link_libraries(okapy_config_store_tests PRIVATE Okapy::Core)
+    add_test(NAME okapy_config_store_tests COMMAND okapy_config_store_tests)
     add_executable(okapy_mod_abi_tests tests/test_mod_abi.cpp)
     target_link_libraries(okapy_mod_abi_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_mod_abi_tests COMMAND okapy_mod_abi_tests)
