@@ -1,6 +1,7 @@
 #pragma once
 
 #include <okapy/event_system.hpp>
+#include <okapy/hook_manager.hpp>
 #include <okapy/mod_registry.hpp>
 
 #include <string_view>
@@ -18,11 +19,14 @@ public:
     [[nodiscard]] const ModRegistry& mods() const noexcept;
     [[nodiscard]] EventBus& events() noexcept;
     [[nodiscard]] const EventBus& events() const noexcept;
+    [[nodiscard]] HookManager& hooks() noexcept;
+    [[nodiscard]] const HookManager& hooks() const noexcept;
 
 private:
     bool m_initialized = false;
     ModRegistry m_modRegistry;
     EventBus m_eventBus;
+    HookManager m_hookManager;
 };
 
 } // namespace okapy
