@@ -142,7 +142,20 @@ class MainActivity : Activity() {
         } else {
             "Geometry Dash was not detected"
         }
-        diagnosticText.text = "Package check: $gamePackage\nLauncher status: ready"
+        val nativeReady = OkapyNative.isAvailable &&
+            runCatching { OkapyNative.nativeInitialize() }.getOrDefault(false)
+        val nativeStatus = if (nativeReady) {
+            runCatching { OkapyNative.nativeStatus() }
+                .getOrDefault("Native Core status unavailable")
+        } else {
+            OkapyNative.statusOrFallback()
+        }
+        val nativeVersion = runCatching { OkapyNative.versionOrFallback() }
+            .getOrDefault("Native library unavailable")
+        diagnosticText.text = "Package check: $gamePackage\n" +
+            "Launcher status: ready\n" +
+            "Native Core: $nativeStatus\n" +
+            "Core version: $nativeVersion"
     }
 
     private fun launchGame() {
