@@ -1,6 +1,7 @@
 add_library(okapy_core STATIC
     src/core.cpp
     src/mod_registry.cpp
+    src/dependency_manager.cpp
 )
 
 add_library(Okapy::Core ALIAS okapy_core)
@@ -22,4 +23,8 @@ if(BUILD_TESTING)
     add_executable(okapy_core_tests tests/test_mod_registry.cpp)
     target_link_libraries(okapy_core_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_core_tests COMMAND okapy_core_tests)
+
+    add_executable(okapy_dependency_tests tests/test_dependency_manager.cpp)
+    target_link_libraries(okapy_dependency_tests PRIVATE Okapy::Core)
+    add_test(NAME okapy_dependency_tests COMMAND okapy_dependency_tests)
 endif()
