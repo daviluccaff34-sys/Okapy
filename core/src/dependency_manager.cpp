@@ -191,7 +191,7 @@ DependencyReport DependencyManager::resolve(
         if (visits[id] == Visit::Unvisited) visit(id);
     }
 
-    if (cycleFound) report.loadOrder.clear();
+    if (cycleFound || report.hasErrors()) report.loadOrder.clear();
     return report;
 }
 
