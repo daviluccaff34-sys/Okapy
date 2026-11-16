@@ -27,6 +27,9 @@ set_target_properties(okapy_core PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_EXT
 
 include(CTest)
 if(BUILD_TESTING)
+    add_executable(okapy_installed_mod_catalog_tests tests/test_installed_mod_catalog.cpp)
+    target_link_libraries(okapy_installed_mod_catalog_tests PRIVATE Okapy::Core)
+    add_test(NAME okapy_installed_mod_catalog_tests COMMAND okapy_installed_mod_catalog_tests)
     add_executable(okapy_core_tests tests/test_mod_registry.cpp)
     target_link_libraries(okapy_core_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_core_tests COMMAND okapy_core_tests)
