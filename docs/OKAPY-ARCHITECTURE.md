@@ -40,7 +40,7 @@ Responsibilities:
 - Start the Okapy-enabled game runtime when the Android integration is implemented.
 - Provide safe launch, diagnostics, and recovery entry points.
 
-The current launcher is a basic Android Activity that detects and opens the game through Android's package manager. It does not host the game process, integrate native libraries, or load Okapy Core.
+The current launcher is a basic Android Activity that detects and opens the game through Android's package manager. An initial NDK/CMake JNI bridge now links the existing C++ Core and exposes initialization, status, version, and shutdown to Kotlin. This bridge runs inside the launcher process only; it does not host the Geometry Dash process, inject into the game, or provide Cocos2d-x integration.
 
 ### 2. Okapy in-game interface
 
@@ -153,7 +153,10 @@ Okapy uses Geode as a public technical reference for understanding the problem s
 - Android launcher foundation, game detection, and ordinary launch Intent: implemented; physical-device verification remains.
 - Okapy home screen matching the intended layout: not implemented.
 - Direct Cocos2d-x integration, Cocos adapter, and native in-game interface: not implemented.
-- .okapy ZIP/manifest validator: initial implementation exists; not yet built or tested.
-- .okapy extraction installer: initial implementation exists; not yet built or tested; intended to be called by in-game install flow.
-- Repository client, dependency planner, native Core, JNI bridge, SDK, hook backend, and native loading: not implemented.
-- Android game-host and Cocos2d-x integration details: not selected or implemented; requires research against supported game binaries/builds.
+- .okapy ZIP/manifest validator and transactional extraction installer: initial Android implementation exists; not yet built or tested; intended to be called by the in-game install flow.
+- Kotlin package-management utility: imports, lists, updates, and removes packages in launcher-private storage; it is an early development path, not the final user-facing management UI.
+- Native C++ Core services (registry, dependency planning, lifecycle, ABI, permissions, events, native module loader, and installed-mod catalog): initial implementations exist; not yet built or tested.
+- Android NDK/CMake JNI bridge: initial implementation exists and links the Core into the launcher native library; not yet built or tested and not connected to the Geometry Dash process.
+- Repository client and in-game repository discovery/download UI: not implemented.
+- Direct Cocos2d-x integration, in-game management UI, game bootstrap, and game-specific hook backend: not implemented; requires research against supported game binaries/builds.
+- SDK and stable public modding contract: not implemented.
