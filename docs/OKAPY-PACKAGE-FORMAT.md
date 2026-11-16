@@ -1,6 +1,6 @@
 # Okapy package format (.okapy)
 
-**Status:** Draft 0.1 — design proposal, not implemented.
+**Status:** Draft 0.1 — specification draft; an initial validator is implemented but not yet tested.
 
 This document defines the first proposed structure for Okapy mod packages. The format must remain explicit, inspectable, and versioned so the launcher can reject packages it cannot safely understand.
 
@@ -87,4 +87,4 @@ Native mod libraries are executable code. Installing or enabling a mod must requ
 
 This is a draft for discussion and implementation planning. It is not yet a public stable specification. Field names, ABI support, signing, dependency constraints, and the native loading contract may change before the first Beta.
 
-The package parser, installer, dependency resolver, and native loader have **not** been implemented by this document.
+An initial Android archive/manifest validator now exists in `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyPackageValidator.kt`. It checks the ZIP structure, manifest fields, game compatibility, ABI entrypoint, dependency/conflict ID syntax, and unsafe paths. It has not yet been built or tested. The installer, dependency resolver, package signing, and native loader are not implemented.
