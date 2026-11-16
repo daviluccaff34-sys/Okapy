@@ -1,6 +1,6 @@
 # Okapy package format (.okapy)
 
-**Status:** Draft 0.1 — specification draft; initial Android validation and extraction implementations exist but have not yet been built or tested.
+**Status:** Draft 0.1 — specification draft; Android validation, extraction, and file-management APIs are implemented but have not yet been built or tested.
 
 This document defines the first proposed structure for Okapy mod packages. The format must remain explicit, inspectable, and versioned so the in-game Okapy interface can reject packages it cannot safely understand.
 
@@ -87,4 +87,4 @@ Native mod libraries are executable code. Installing or enabling a mod must requ
 
 This is a draft for discussion and implementation planning. It is not yet a stable public specification. Field names, ABI support, signing, dependency constraints, and the native loading contract may change before the first Beta.
 
-The initial Android archive/manifest validator is in `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyPackageValidator.kt`. The initial extraction installer is in `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyPackageInstaller.kt`. The validator checks ZIP structure, manifest fields, game compatibility, ABI entrypoint, dependency/conflict ID syntax, and unsafe paths. The installer revalidates, extracts into a temporary private directory, checks normalized paths and size limits, and then renames the staging directory into place. Neither implementation has been built or tested. The installer is intended to be called by the in-game installation flow, but that interface does not exist yet. Dependency resolution, package signing, repository downloads, and native loading are not implemented.
+The Android archive/manifest validator is in `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyPackageValidator.kt`. The extraction implementation is in `OkapyPackageInstaller.kt`; it revalidates, extracts into a staging directory, enforces entry/expanded-size limits and safe paths, then renames the staging directory into place. Existing installs are preserved during an update attempt and restored if the new staging directory cannot be promoted. The management API is in `OkapyModManager.kt`: it exposes install, update, listInstalled, and uninstall operations against an app-private storage root. Listing checks each installed manifest and directory identity; uninstall refuses paths outside the managed root. These Kotlin implementations have not been built or tested. The manager is not yet connected to an in-game Cocos2d-x interface or the launcher's screen. Dependency resolution, package signing, repository downloads, and native loading are not implemented.
