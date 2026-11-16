@@ -3,7 +3,7 @@
 **Purpose:** authoritative path inventory for the current `main` branch. Update this document whenever a project file is created, removed, renamed, or moved. Before editing an existing file, fetch its current version from GitHub; do not rely on an old local copy.
 
 **Last inventory check:** 2026-11-16  
-**Tracked files at check:** 71
+**Tracked files at check:** 72
 
 ## Repository root
 
@@ -79,6 +79,7 @@
 - `docs/GEODE-RESEARCH.md`
 - `docs/OKAPY-ARCHITECTURE.md`
 - `docs/OKAPY-PACKAGE-FORMAT.md`
+- `docs/PROJECT-FILE-INDEX.md` (this file)
 - `docs/ROADMAP.md`
 
 ## Launcher documentation
