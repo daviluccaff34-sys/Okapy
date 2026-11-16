@@ -1,26 +1,37 @@
 # Okapy Launcher
 
-This directory is reserved for the Okapy launcher application.
+The first Okapy launcher target is **Android**.
 
-## v0.1.0 goal
+## Android application
 
-Build a reliable launcher foundation first. The first release must clearly state its supported platform and Geometry Dash versions, validate the game installation before launch, and provide understandable diagnostics.
+The initial project is in `android/` and uses Kotlin with the Android SDK.
 
-## Responsibilities
+### Current v0.1.0 foundation
 
-- Detect a supported Geometry Dash installation.
-- Check compatibility and required files.
-- Prepare Okapy integration only after the platform-specific design is established.
-- Start the game using a platform-appropriate mechanism.
-- Show launch errors and collect diagnostic logs.
-- Provide a recovery path if launch fails.
+- Native Android application entry point.
+- Basic launcher screen and Okapy version display.
+- Checks whether the Geometry Dash Android package is installed.
+- Opens the installed game through Android's package launch intent.
+- Shows a useful message when the game is not detected.
 
-## Current status
+### Not implemented yet
 
-This is a planning document only. No executable launcher, game integration, injection mechanism, or mod runtime has been implemented here yet.
+- Geode or Okapy mod loading.
+- Native library injection or binary patching.
+- Installation or modification of Geometry Dash files.
+- Safe mode for a mod runtime.
+- Mod management and `.okapy` package installation.
+- Automated game-version compatibility checks.
 
-## Platform decision
+The current app is an early launcher shell, not yet a mod loader. It does not download Geometry Dash or bypass its official distribution.
 
-The initial target platform is not decided yet. Platform-specific source code and build configuration should be added after this decision because Android and desktop systems have different installation, permission, and launch models.
+## Build
+
+1. Open `android/` in Android Studio.
+2. Install Android SDK Platform 35 and JDK 17 if Android Studio requests them.
+3. Let Gradle sync finish.
+4. Select the `app` run configuration and run it on an Android device or emulator.
+
+The project currently does not include the Gradle wrapper. Android Studio can open the Gradle project directly.
 
 See [Geode research](../docs/GEODE-RESEARCH.md) and [roadmap](../docs/ROADMAP.md).
