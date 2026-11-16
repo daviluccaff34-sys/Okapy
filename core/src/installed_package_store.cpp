@@ -26,8 +26,12 @@ bool isDirectPackageDirectory(
     canonical = std::filesystem::canonical(candidate, error);
     if (error) return false;
     const auto canonicalRoot = std::filesystem::canonical(root, error);
-    if (error) return false;
-    return canonical.parent_path() == canonicalRoot;
+    if (error || canonical.parent_path() != canonicalRoot) return false;
+
+    const auto manifestPath = canonical / "okapy.json";
+    const auto manifestStatus = std::filesystem::symlink_status(manifestPath, error);
+    return !error && !std::filesystem::is_symlink(manifestStatus) &&
+        std::filesystem::is_regular_file(manifestStatus);
 }
 
 } // namespace
