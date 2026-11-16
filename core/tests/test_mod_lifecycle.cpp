@@ -19,11 +19,11 @@ void testStartAndReverseShutdown() {
 
     assert(lifecycle.registerModule("example.base", [&] {
         calls.push_back("start-base"); return true;
-    }, [&] { calls.push_back("stop-base"); }) == okapy::LifecycleResult::Started);
+    }, [&] { calls.push_back("stop-base"); }) == okapy::LifecycleResult::Registered);
 
     assert(lifecycle.registerModule("example.addon", [&] {
         calls.push_back("start-addon"); return true;
-    }, [&] { calls.push_back("stop-addon"); }) == okapy::LifecycleResult::Started);
+    }, [&] { calls.push_back("stop-addon"); }) == okapy::LifecycleResult::Registered);
 
     assert(lifecycle.start(makePlan({"example.base", "example.addon"}))
            == okapy::LifecycleResult::Started);
@@ -47,13 +47,13 @@ void testFailedInitializerRollsBack() {
 
     lifecycle.registerModule("example.second", [&] {
         calls.push_back("start-second"); return false;
-    });
+    }, [&] { calls.push_back("stop-second"); });
 
     assert(lifecycle.start(makePlan({"example.first", "example.second"}))
            == okapy::LifecycleResult::InitializationFailed);
     assert(lifecycle.runningCount() == 0);
     assert((calls == std::vector<std::string>{
-        "start-first", "start-second", "stop-first"}));
+        "start-first", "start-second", "stop-second", "stop-first"}));
 
     const auto entries = lifecycle.list();
     assert(entries.size() == 2);
@@ -69,7 +69,7 @@ void testInvalidPlansAndRegistration() {
     assert(lifecycle.registerModule("example.noinit", {})
            == okapy::LifecycleResult::MissingInitializer);
     assert(lifecycle.registerModule("example.mod", [] { return true; })
-           == okapy::LifecycleResult::Started);
+           == okapy::LifecycleResult::Registered);
     assert(lifecycle.registerModule("example.mod", [] { return true; })
            == okapy::LifecycleResult::DuplicateId);
     assert(lifecycle.start(makePlan({}))
