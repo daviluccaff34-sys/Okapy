@@ -31,6 +31,7 @@ public:
     CatalogResult update(ModInfo mod, ModManifest manifest);
     CatalogResult uninstall(std::string_view modId);
     bool setEnabled(std::string_view modId, bool enabled);
+    [[nodiscard]] bool isEnabled(std::string_view modId) const;
 
     [[nodiscard]] std::vector<ModManifest> manifests() const;
     [[nodiscard]] std::optional<ModManifest> manifest(std::string_view modId) const;
