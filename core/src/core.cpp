@@ -35,4 +35,12 @@ const HookManager& Core::hooks() const noexcept {
     return m_hookManager;
 }
 
+PatchManager& Core::patches() noexcept {
+    return m_patchManager;
+}
+
+const PatchManager& Core::patches() const noexcept {
+    return m_patchManager;
+}
+
 } // namespace okapy
