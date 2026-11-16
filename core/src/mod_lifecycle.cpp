@@ -6,6 +6,10 @@
 
 namespace okapy {
 
+ModLifecycleManager::~ModLifecycleManager() {
+    stopAll();
+}
+
 LifecycleResult ModLifecycleManager::registerModule(
     std::string id, Initializer initialize, Shutdown shutdown) {
     if (!ModRegistry::isValidId(id)) return LifecycleResult::InvalidId;
@@ -15,7 +19,7 @@ LifecycleResult ModLifecycleManager::registerModule(
     m_modules.emplace(std::move(id),
         Entry{std::move(initialize), std::move(shutdown),
               ModLifecycleState::Registered, {}});
-    return LifecycleResult::Started;
+    return LifecycleResult::Registered;
 }
 
 LifecycleResult ModLifecycleManager::start(const ModLoadPlan& plan) {
@@ -47,6 +51,14 @@ LifecycleResult ModLifecycleManager::start(const ModLoadPlan& plan) {
                 entry.error = "Mod initializer returned false.";
             }
             entry.state = ModLifecycleState::Failed;
+            try {
+                if (entry.shutdown) entry.shutdown();
+            } catch (const std::exception& exception) {
+                entry.error += " Shutdown callback: ";
+                entry.error += exception.what();
+            } catch (...) {
+                entry.error += " Shutdown callback threw an unknown exception.";
+            }
             stopAll();
             return LifecycleResult::InitializationFailed;
         }
