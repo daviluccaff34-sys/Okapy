@@ -6,7 +6,7 @@ The first Okapy launcher target is **Android**.
 
 The initial project is in `android/` and uses Kotlin with the Android SDK.
 
-### Current v0.1.0 foundation
+### Current Android app foundation
 
 - Native Android application entry point.
 - Basic launcher screen and Okapy version display.
