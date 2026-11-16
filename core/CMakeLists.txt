@@ -16,3 +16,10 @@ set_target_properties(okapy_core PROPERTIES
     POSITION_INDEPENDENT_CODE ON
     CXX_EXTENSIONS OFF
 )
+
+include(CTest)
+if(BUILD_TESTING)
+    add_executable(okapy_core_tests tests/test_mod_registry.cpp)
+    target_link_libraries(okapy_core_tests PRIVATE Okapy::Core)
+    add_test(NAME okapy_core_tests COMMAND okapy_core_tests)
+endif()
