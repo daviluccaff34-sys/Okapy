@@ -13,10 +13,10 @@ ModAbiValidation validateModAbi(
 
     constexpr auto infoMinimum =
         static_cast<std::uint32_t>(offsetof(OkapyModInfoV1, version) +
-                                   sizeof(OkapyModInfoV1::version));
+            sizeof(((OkapyModInfoV1*)nullptr)->version));
     constexpr auto apiMinimum =
         static_cast<std::uint32_t>(offsetof(OkapyModApiV1, shutdown) +
-                                   sizeof(OkapyModApiV1::shutdown));
+            sizeof(((OkapyModApiV1*)nullptr)->shutdown));
 
     if (info.struct_size < infoMinimum) return {ModAbiError::InvalidInfo};
     if (api->struct_size < apiMinimum) return {ModAbiError::InvalidApiSize};
