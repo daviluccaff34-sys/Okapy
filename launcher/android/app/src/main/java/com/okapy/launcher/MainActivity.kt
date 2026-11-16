@@ -7,8 +7,6 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.view.Gravity
-import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -109,7 +107,7 @@ class MainActivity : Activity() {
         }
         infoCard.addView(infoTitle)
         val info = TextView(this).apply {
-            text = "Okapy Launcher 0.1.0\nAndroid edition\n\nThis first build is a launcher foundation. It can check for and open the installed game. Mod loading is not available yet."
+            text = "Okapy 0.00.1\nAndroid edition\n\nDevelopment version. The launcher foundation can check for and open the installed game. Mod loading is not available yet."
             textSize = 14f
             setTextColor(Color.rgb(225, 233, 238))
             setLineSpacing(dp(4).toFloat(), 1f)
