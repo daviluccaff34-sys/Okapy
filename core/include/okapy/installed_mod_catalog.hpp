@@ -17,7 +17,8 @@ enum class CatalogResult {
     NotFound,
     InvalidMod,
     ManifestMismatch,
-    AlreadyExists
+    AlreadyExists,
+    ModEnabled
 };
 
 // In-memory catalog joining installed package metadata to dependency manifests.
