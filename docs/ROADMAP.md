@@ -20,7 +20,9 @@ A feature is complete only after implementation and testing on a documented devi
 ## v0.01.1 Beta — first Beta
 
 - [ ] Complete the launcher experience.
-- [ ] Specify and implement the `.okapy` package format and metadata schema.
+- [x] Draft the initial `.okapy` package format and metadata schema (not yet frozen).
+- [x] Add the first Android ZIP/manifest validator (implementation exists; testing remains).
+- [ ] Test and harden the package validator.
 - [ ] Implement mod discovery, installation, loading, and management.
 - [ ] Implement dependency and incompatibility handling.
 - [ ] Add safe recovery behavior, diagnostics, and logs.
