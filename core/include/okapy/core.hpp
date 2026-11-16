@@ -3,6 +3,7 @@
 #include <okapy/event_system.hpp>
 #include <okapy/hook_manager.hpp>
 #include <okapy/mod_registry.hpp>
+#include <okapy/patch_manager.hpp>
 
 #include <string_view>
 
@@ -21,12 +22,15 @@ public:
     [[nodiscard]] const EventBus& events() const noexcept;
     [[nodiscard]] HookManager& hooks() noexcept;
     [[nodiscard]] const HookManager& hooks() const noexcept;
+    [[nodiscard]] PatchManager& patches() noexcept;
+    [[nodiscard]] const PatchManager& patches() const noexcept;
 
 private:
     bool m_initialized = false;
     ModRegistry m_modRegistry;
     EventBus m_eventBus;
     HookManager m_hookManager;
+    PatchManager m_patchManager;
 };
 
 } // namespace okapy
