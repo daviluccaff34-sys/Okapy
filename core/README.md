@@ -8,7 +8,7 @@ The native foundation of Okapy is written in C++17 and kept independent from And
 - Thread-safe in-memory `ModRegistry` and dependency validation/order planning.
 - Persistent `ConfigStore` with per-mod namespaces, bounded binary files and Host API callbacks.
 - `NativeModule` for explicit-path shared-library loading and symbol lookup.
-- Versioned C-compatible `Okapy Mod ABI v1` structures and validation, including host logging, game information and per-mod configuration service callbacks.
+- Versioned C-compatible `Okapy Mod ABI v1` structures and validation, including host logging, game information, per-mod configuration and event service callbacks.
 - `NativeModLoader` to resolve the ABI entry point, validate metadata and register native callbacks with the lifecycle manager.
 - `ModLifecycleManager` for ordered initialization, reverse-order shutdown and failure rollback.
 - Typed `EventBus`, metadata-only `HookManager` and metadata-only `PatchManager`.
@@ -19,7 +19,8 @@ The native foundation of Okapy is written in C++17 and kept independent from And
 Include `<okapy/native_mod_loader.hpp>`. Supply a trusted absolute library path, a version-1 host API table and the lifecycle manager:
 
 ```cpp
-OkapyHostApiV1 host{sizeof(OkapyHostApiV1), OKAPY_MOD_ABI_VERSION_1, nullptr, &hostLog};
+okapy::Core core;
+const auto host = core.hostApi();
 const auto result = core.nativeMods().load(absoluteLibraryPath, core.lifecycle(), host);
 ```
 
@@ -38,9 +39,7 @@ const auto host = core.hostApi();
 core.nativeMods().load(libraryPath, core.lifecycle(), host);
 ```
 
-The returned Host API table exposes `config_get` and `config_set`; other optional callbacks, including logging and game information, remain null in this configuration-only table. The `ConfigStore` object is owned by `Core` and remains alive while its native mods are shut down. Standalone users can construct a `ConfigStore` with a directory and call `set`, `get`, `erase` and `clearMod` directly.
-
-Each mod ID gets its own `.okcfg` file. Values are UTF-8 strings; keys are limited to 256 bytes, values to 64 KiB, and each mod can store up to 4096 entries. The binary format is versioned. Writes use a temporary file followed by rename, and failed writes restore the previous in-memory value. This is persistence and namespace separation, not encryption: mods execute in-process and must be treated as trusted code.
+The Core-provided Host API implements `config_get` and `config_set`; both operate through the Core-owned `ConfigStore`. Each mod ID gets its own `.okcfg` file. Values are UTF-8 strings; keys are limited to 256 bytes, values to 64 KiB, and each mod can store up to 4096 entries. The binary format is versioned. Writes use a temporary file followed by rename, and failed writes restore the previous in-memory value. This is persistence and namespace separation, not encryption: mods execute in-process and must be treated as trusted code.
 
 ## Okapy Mod ABI v1 and Host API
 
@@ -48,11 +47,13 @@ Mod authors include `<okapy/mod_abi.h>` and export `okapy_mod_query`. The query 
 
 Host API v1 defines optional C-compatible services:
 
-- `log`: send a UTF-8 diagnostic message with a debug/info/warning/error level.
-- `get_game_info`: ask the host for game ID, game version, platform and architecture.
-- `config_get` / `config_set`: read and write UTF-8 string values in a namespace belonging to the mod ID supplied by the host callback. `config_get` reports the required buffer size and distinguishes missing keys from undersized buffers. The Core-provided table currently implements these two callbacks; logging and game-info callbacks are left null.
+- `config_get` / `config_set`: read and write UTF-8 string values in the namespace named by the supplied mod ID.
+- `event_subscribe`: subscribe to a named event and receive a nonzero subscription token.
+- `event_unsubscribe`: cancel a previous subscription using its token.
+- `event_publish`: synchronously publish a named event with a UTF-8 string payload and optionally receive the number of listeners invoked.
+- `log` and `get_game_info`: reserved optional service slots; the Core-provided table currently leaves them null.
 
-A null callback means that service is unavailable. The host application must provide the callback implementations and manage their backing data; the ABI only defines the stable boundary and does not silently invent a config store or game version. Returned game-info strings are borrowed and must remain valid for the duration documented by the host callback. Services must validate mod IDs/keys and handle untrusted input. Event subscriptions and cross-thread event delivery are not part of ABI v1.
+Event names are case-sensitive UTF-8 strings. A payload is an opaque UTF-8 string; JSON is a convenient convention, but the Core does not parse or validate it. Event callbacks execute synchronously on the thread that publishes the event. The event name and payload pointers are borrowed only for the callback duration and must not be retained. A mod must unsubscribe before its callback function or user data becomes invalid. Callbacks should be short and must not assume delivery on the game's main thread. There is no cross-thread queue, event filtering by priority, or automatic owner-based subscription cleanup yet.
 
 The ABI uses fixed-width integers, opaque context pointers and C function pointers. It avoids passing C++ standard-library objects or exceptions across the shared-library boundary. `struct_size` supports compatible extension; the ABI version identifies incompatible revisions. Host service callbacks are optional and must be checked for null before use. The returned API table and metadata strings must remain valid until the library is unloaded.
 
@@ -76,7 +77,8 @@ Modules initialize in dependency-first order and shut down in reverse order. If 
 
 - Reading, validating, or extracting `.okapy` archives.
 - Automatic package discovery, integrity verification and enable/disable policy.
-- A stable public mod SDK and cross-thread event queue.
+- Automatic event-subscription cleanup when a mod stops/unloads and a cross-thread event queue.
+- A stable public mod SDK.
 - Geometry Dash/Cocos2d-x integration and JNI bridge.
 - Actual hook installation or memory patch application.
 
