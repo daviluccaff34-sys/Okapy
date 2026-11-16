@@ -2,6 +2,7 @@ add_library(okapy_core STATIC
     src/core.cpp
     src/config_store.cpp
     src/mod_registry.cpp
+    src/installed_mod_catalog.cpp
     src/dependency_manager.cpp
     src/hook_manager.cpp
     src/patch_manager.cpp
