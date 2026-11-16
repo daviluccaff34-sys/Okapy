@@ -4,6 +4,7 @@
 #include <okapy/hook_manager.hpp>
 #include <okapy/mod_loader.hpp>
 #include <okapy/mod_registry.hpp>
+#include <okapy/native_module.hpp>
 #include <okapy/patch_manager.hpp>
 
 #include <string_view>
