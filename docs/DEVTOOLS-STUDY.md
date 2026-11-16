@@ -39,7 +39,11 @@ The inspected `src/pages/Attributes.cpp` divides inspection into groups, includi
 - menu-item and layout-related attributes;
 - custom properties supplied by mods.
 
-Some controls write changes directly back to the live node. The source also exposes destructive or structurally risky operations, such as deleting a node and dragging it to a different parent. These should not be copied into an initial Okapy inspector. A first version should be read-only, with editing introduced deliberately and with clear safeguards.
+Some controls write changes directly back to the live node. The inspected implementation also exposes destructive or structurally risky operations, such as deleting a node and dragging it to a different parent. These should not be copied into an initial Okapy inspector. A first version should be read-only, with editing introduced deliberately and with clear safeguards.
+
+The basic inspector groups controls by capability rather than presenting one undifferentiated property list. For example, sprite-specific controls are shown only when the selected node can be treated as a `CCSprite`, and touch-priority controls are shown only when a matching touch handler exists. This is a useful pattern: inspect a capability only after checking that the selected object supports it.
+
+The screenshot action captures a weak node reference and checks it again when the asynchronous save operation completes. That avoids blindly using a node pointer that may have become invalid while the file picker was open.
 
 ## Extension API
 
@@ -58,9 +62,9 @@ This is a useful design lesson for Okapy: custom inspection should be an extensi
 
 ## UI and integration
 
-The upstream project uses Dear ImGui for its developer interface and provides separate pages for the tree, attributes, settings, and optional advanced views. Its CMake project builds a shared Geode mod and links the Geode SDK and ImGui.
+The inspected `src/DevTools.cpp` uses Dear ImGui for its developer interface. It keeps the selected node separately, exposes a custom-inspector callback collection, and creates a draggable floating button as a child of Geode's `OverlayManager`. Settings are serialized through Geode's saved-value mechanism. The CMake project builds a shared Geode mod and links the Geode SDK and ImGui.
 
-This confirms that DevTools is implemented as an in-game Geode mod, rather than as an Android launcher screen. It does not, by itself, establish the exact UI framework or rendering path Okapy should use.
+This confirms that DevTools is implemented as an in-game Geode mod, rather than as an Android launcher screen. Its use of Geode's overlay and saved-value services is specific to that environment; Okapy will need its own host-side equivalents. The source study does not establish the exact UI framework or rendering path Okapy should use.
 
 ## Okapy takeaways
 
