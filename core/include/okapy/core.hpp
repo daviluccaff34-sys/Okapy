@@ -10,6 +10,7 @@
 #include <okapy/native_mod_loader.hpp>
 #include <okapy/native_module.hpp>
 #include <okapy/patch_manager.hpp>
+#include <okapy/permission_manager.hpp>
 
 #include <atomic>
 #include <cstdint>
@@ -44,6 +45,8 @@ public:
     [[nodiscard]] const ModLoader& loader() const noexcept;
     [[nodiscard]] ConfigStore& config() noexcept;
     [[nodiscard]] const ConfigStore& config() const noexcept;
+    [[nodiscard]] PermissionManager& permissions() noexcept;
+    [[nodiscard]] const PermissionManager& permissions() const noexcept;
     [[nodiscard]] OkapyHostApiV1 hostApi() noexcept;
     [[nodiscard]] NativeModLoader& nativeMods() noexcept;
     [[nodiscard]] const NativeModLoader& nativeMods() const noexcept;
@@ -56,21 +59,24 @@ private:
         uint32_t* requiredSize) noexcept;
     static int32_t configSetCallback(void* context, const char* modId,
         const char* key, const char* value) noexcept;
-    static int32_t eventSubscribeCallback(void* context, const char* eventName,
-        OkapyEventCallbackV1 callback, void* userData,
+    static int32_t eventSubscribeCallback(void* context, const char* modId,
+        const char* eventName, OkapyEventCallbackV1 callback, void* userData,
         uint64_t* outToken) noexcept;
-    static int32_t eventUnsubscribeCallback(void* context,
+    static int32_t eventUnsubscribeCallback(void* context, const char* modId,
         uint64_t token) noexcept;
-    static int32_t eventPublishCallback(void* context, const char* eventName,
+    static int32_t eventPublishCallback(void* context, const char* modId,
+        const char* eventName, const char* payload, uint32_t* outListenerCount) noexcept;
+    static int32_t permissionCheckCallback(void* context, const char* modId,
+        const char* permission) noexcept;
+
+    int32_t subscribeEvent(const char* modId, const char* eventName,
+        OkapyEventCallbackV1 callback, void* userData, uint64_t* outToken) noexcept;
+    int32_t unsubscribeEvent(const char* modId, uint64_t token) noexcept;
+    int32_t publishEvent(const char* modId, const char* eventName,
         const char* payload, uint32_t* outListenerCount) noexcept;
 
-    int32_t subscribeEvent(const char* eventName, OkapyEventCallbackV1 callback,
-        void* userData, uint64_t* outToken) noexcept;
-    int32_t unsubscribeEvent(uint64_t token) noexcept;
-    int32_t publishEvent(const char* eventName, const char* payload,
-        uint32_t* outListenerCount) noexcept;
-
     struct EventSubscription {
+        std::string ownerId;
         std::string eventName;
         ListenerHandle handle;
     };
@@ -85,6 +91,7 @@ private:
     PatchManager m_patchManager;
     ModLoader m_modLoader;
     ConfigStore m_configStore;
+    PermissionManager m_permissionManager;
     NativeModLoader m_nativeModLoader;
     // Lifecycle is destroyed before NativeModLoader so callbacks run while libraries remain loaded.
     ModLifecycleManager m_lifecycleManager;
