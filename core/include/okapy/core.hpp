@@ -11,11 +11,23 @@
 #include <okapy/native_module.hpp>
 #include <okapy/patch_manager.hpp>
 
+#include <atomic>
+#include <cstdint>
+#include <mutex>
+#include <string>
 #include <string_view>
+#include <unordered_map>
 
 namespace okapy {
+
 inline constexpr std::string_view kName = "Okapy";
 inline constexpr std::string_view kVersion = "0.00.1";
+
+struct ModEvent final {
+    std::string name;
+    std::string payload;
+};
+
 class Core final {
 public:
     bool initialize() noexcept;
@@ -37,10 +49,33 @@ public:
     [[nodiscard]] const NativeModLoader& nativeMods() const noexcept;
     [[nodiscard]] ModLifecycleManager& lifecycle() noexcept;
     [[nodiscard]] const ModLifecycleManager& lifecycle() const noexcept;
+
 private:
+    static int32_t configGetCallback(void* context, const char* modId,
+        const char* key, char* buffer, uint32_t capacity,
+        uint32_t* requiredSize) noexcept;
+    static int32_t configSetCallback(void* context, const char* modId,
+        const char* key, const char* value) noexcept;
+    static int32_t eventSubscribeCallback(void* context, const char* eventName,
+        OkapyEventCallbackV1 callback, void* userData,
+        uint64_t* outToken) noexcept;
+    static int32_t eventUnsubscribeCallback(void* context,
+        uint64_t token) noexcept;
+    static int32_t eventPublishCallback(void* context, const char* eventName,
+        const char* payload, uint32_t* outListenerCount) noexcept;
+
+    int32_t subscribeEvent(const char* eventName, OkapyEventCallbackV1 callback,
+        void* userData, uint64_t* outToken) noexcept;
+    int32_t unsubscribeEvent(uint64_t token) noexcept;
+    int32_t publishEvent(const char* eventName, const char* payload,
+        uint32_t* outListenerCount) noexcept;
+
     bool m_initialized = false;
     ModRegistry m_modRegistry;
     EventBus m_eventBus;
+    std::mutex m_eventSubscriptionsMutex;
+    std::unordered_map<uint64_t, ListenerHandle> m_eventSubscriptions;
+    std::atomic<uint64_t> m_nextEventToken{1};
     HookManager m_hookManager;
     PatchManager m_patchManager;
     ModLoader m_modLoader;
@@ -49,4 +84,5 @@ private:
     // Lifecycle is destroyed before NativeModLoader so callbacks run while libraries remain loaded.
     ModLifecycleManager m_lifecycleManager;
 };
+
 } // namespace okapy
