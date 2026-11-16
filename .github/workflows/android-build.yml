@@ -1,14 +1,7 @@
 name: Android validation
 
 on:
-  push:
-    paths:
-      - "launcher/android/**"
-      - ".github/workflows/android-build.yml"
-  pull_request:
-    paths:
-      - "launcher/android/**"
-      - ".github/workflows/android-build.yml"
+  # Run only when explicitly requested. This avoids spending Actions minutes on every commit.
   workflow_dispatch:
 
 jobs:
