@@ -83,6 +83,14 @@ bool InstalledModCatalog::setEnabled(std::string_view modId, bool enabled) {
     return m_registry.setState(modId, enabled ? ModState::Enabled : ModState::Disabled);
 }
 
+bool InstalledModCatalog::isEnabled(std::string_view modId) const {
+    if (!ModRegistry::isValidId(modId)) return false;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_manifests.find(std::string(modId)) == m_manifests.end()) return false;
+    const auto current = m_registry.find(modId);
+    return current && current->state == ModState::Enabled;
+}
+
 std::vector<ModManifest> InstalledModCatalog::manifests() const {
     std::lock_guard<std::mutex> lock(m_mutex);
     std::vector<ModManifest> result;
