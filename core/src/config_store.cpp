@@ -158,6 +158,15 @@ ConfigResult ConfigStore::saveLocked(const std::string& modId) const {
         return ConfigResult::IoError;
     }
 
+    uint64_t encodedSize = 12;
+    for (const auto& entry : found->second) {
+        if (entry.first.size() > kMaxKeyBytes ||
+            entry.second.size() > kMaxValueBytes)
+            return ConfigResult::ValueTooLarge;
+        encodedSize += 8 + entry.first.size() + entry.second.size();
+    }
+    if (encodedSize > kMaxFileBytes) return ConfigResult::ValueTooLarge;
+
     std::vector<std::string> keys;
     keys.reserve(found->second.size());
     for (const auto& entry : found->second) keys.push_back(entry.first);
@@ -182,15 +191,28 @@ ConfigResult ConfigStore::saveLocked(const std::string& modId) const {
     out.close();
 
     std::filesystem::rename(temporary, destination, ec);
-    if (ec) {
-        // Windows does not replace an existing destination with rename().
-        std::error_code removeError;
-        std::filesystem::remove(destination, removeError);
-        ec.clear();
-        std::filesystem::rename(temporary, destination, ec);
+    if (ec && std::filesystem::exists(destination)) {
+        // Preserve the previous file if the platform cannot replace it.
+        auto backup = destination;
+        backup += ".bak";
+        std::error_code backupError;
+        std::filesystem::remove(backup, backupError);
+        backupError.clear();
+        std::filesystem::rename(destination, backup, backupError);
+        if (!backupError) {
+            ec.clear();
+            std::filesystem::rename(temporary, destination, ec);
+            if (ec) {
+                std::error_code restoreError;
+                std::filesystem::rename(backup, destination, restoreError);
+            } else {
+                std::filesystem::remove(backup, backupError);
+            }
+        }
     }
     if (ec) {
-        std::filesystem::remove(temporary, ec);
+        std::error_code cleanupError;
+        std::filesystem::remove(temporary, cleanupError);
         return ConfigResult::IoError;
     }
     return ConfigResult::Ok;
