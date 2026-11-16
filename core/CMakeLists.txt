@@ -7,6 +7,7 @@ add_library(okapy_core STATIC
     src/mod_loader.cpp
     src/native_module.cpp
     src/mod_lifecycle.cpp
+    src/mod_abi.cpp
 )
 
 add_library(Okapy::Core ALIAS okapy_core)
@@ -67,4 +68,8 @@ if(BUILD_TESTING)
     add_executable(okapy_mod_lifecycle_tests tests/test_mod_lifecycle.cpp)
     target_link_libraries(okapy_mod_lifecycle_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_mod_lifecycle_tests COMMAND okapy_mod_lifecycle_tests)
+
+    add_executable(okapy_mod_abi_tests tests/test_mod_abi.cpp)
+    target_link_libraries(okapy_mod_abi_tests PRIVATE Okapy::Core)
+    add_test(NAME okapy_mod_abi_tests COMMAND okapy_mod_abi_tests)
 endif()
