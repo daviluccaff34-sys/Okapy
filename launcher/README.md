@@ -13,12 +13,14 @@ The initial project is in `android/` and uses Kotlin with the Android SDK and ND
 - Checks whether the Geometry Dash Android package is installed.
 - Opens the installed game through Android's package launch intent.
 - Shows a useful message when the game is not detected.
-- Imports, validates, installs, lists, updates, and uninstalls `.okapy` packages in app-private storage.
+- Includes an early package-management utility that imports, validates, installs, lists, updates, and uninstalls `.okapy` packages in app-private storage. This is a development utility, not the intended final mod-management experience.
 - Builds the existing C++17 Core for Android through CMake/NDK.
 - Provides an initial JNI bridge to initialize, inspect, and shut down the native Core.
 - Displays native Core availability, status, and version in the launcher.
 
-The JNI bridge currently exposes the Core lifecycle and basic diagnostics. It does not inject Okapy into Geometry Dash, hook the game's process, or load installed mods into the game.
+**Product requirement:** discovering, downloading, installing, updating, enabling, disabling, and removing mods must happen through the Okapy interface inside Geometry Dash. The final interface will be rendered with Cocos2d-x in the game's own process and scene graph. Users should not need the Android launcher to manage mods.
+
+The JNI bridge currently exposes the Core lifecycle and basic diagnostics inside the launcher process only. It does not inject Okapy into Geometry Dash, hook the game's process, or load installed mods into the game.
 
 ### Not implemented yet
 
