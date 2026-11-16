@@ -3,6 +3,7 @@ package com.okapy.launcher.mods
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.util.zip.ZipFile
@@ -48,7 +49,11 @@ object OkapyPackageValidator {
                 val entryNames = HashSet<String>()
                 var entryCount = 0
                 var expandedBytes = 0L
+                var manifestBytes: ByteArray? = null
+                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
 
+                // Count bytes while reading, rather than trusting ZIP metadata alone.
+                // This also enforces limits when an entry reports an unknown size.
                 while (entries.hasMoreElements()) {
                     val entry = entries.nextElement()
                     entryCount++
@@ -61,25 +66,39 @@ object OkapyPackageValidator {
                     if (!entryNames.add(entry.name)) {
                         return failure("Package contains duplicate archive paths.")
                     }
-                    if (entry.size > 0) {
-                        expandedBytes += entry.size
-                        if (expandedBytes > MAX_UNCOMPRESSED_BYTES) {
-                            return failure("Package expands beyond the allowed size.")
+
+                    if (entry.isDirectory) continue
+
+                    val isManifest = entry.name == MANIFEST_NAME
+                    if (isManifest && entry.size > MAX_MANIFEST_BYTES) {
+                        return failure("Manifest is not a valid size.")
+                    }
+
+                    val capturedManifest = if (isManifest) ByteArrayOutputStream() else null
+                    zip.getInputStream(entry).use { input ->
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count == -1) break
+                            expandedBytes += count
+                            if (expandedBytes > MAX_UNCOMPRESSED_BYTES) {
+                                return failure("Package expands beyond the allowed size.")
+                            }
+                            if (capturedManifest != null) {
+                                if (capturedManifest.size().toLong() + count > MAX_MANIFEST_BYTES) {
+                                    return failure("Manifest is not a valid size.")
+                                }
+                                capturedManifest.write(buffer, 0, count)
+                            }
                         }
+                    }
+                    if (capturedManifest != null) {
+                        manifestBytes = capturedManifest.toByteArray()
                     }
                 }
 
-                val manifestEntry = zip.getEntry(MANIFEST_NAME)
+                val manifestContent = manifestBytes
                     ?: return failure("Root manifest okapy.json is missing.")
-                if (manifestEntry.isDirectory || manifestEntry.size < 0 ||
-                    manifestEntry.size > MAX_MANIFEST_BYTES
-                ) {
-                    return failure("Manifest is not a valid size.")
-                }
-
-                val manifestText = zip.getInputStream(manifestEntry).bufferedReader(Charsets.UTF_8).use {
-                    it.readText()
-                }
+                val manifestText = manifestContent.toString(Charsets.UTF_8)
                 val manifest = try {
                     JSONObject(manifestText)
                 } catch (_: JSONException) {
