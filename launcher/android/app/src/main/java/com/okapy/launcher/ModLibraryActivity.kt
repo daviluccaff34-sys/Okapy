@@ -88,7 +88,7 @@ class ModLibraryActivity : Activity() {
     private fun openPackagePicker() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/octet-stream"
+            type = "*/*"
             putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
                 "application/zip",
                 "application/octet-stream"
