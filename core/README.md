@@ -9,10 +9,40 @@ Android and Geometry Dash so its systems can be developed and tested separately.
 - Core identity/version constants and initialization state.
 - Thread-safe in-memory `ModRegistry`.
 - `DependencyManager` for enabled-mod dependency validation, conflict detection, cycle detection and deterministic dependency-first ordering.
+- `ModLoader` to prepare metadata-only load plans using dependency validation and ordering.
 - Typed `EventBus` with RAII listener handles, priorities, per-event clearing and snapshot-based dispatch.
 - `HookManager` for hook metadata registration, owner tracking, target conflict checks and logical state management.
 - `PatchManager` for patch metadata, expected/replacement byte validation, address overflow checks, overlap detection and owner-based state management.
-- Unit tests for registry operations, dependency resolution, event dispatch, hook management and patch management.
+- Unit tests for registry operations, dependency resolution, event dispatch, hook management, patch management and load-plan preparation.
+
+## ModLoader
+
+Include `<okapy/mod_loader.hpp>` to prepare a dependency-safe order for enabled
+mods after their metadata and manifests have been registered:
+
+```cpp
+okapy::Core core;
+core.initialize();
+
+const auto plan = core.loader().prepare(core.mods(), manifests);
+if (plan.isReady()) {
+    for (const auto& modId : plan.dependencies.loadOrder) {
+        // A future native backend will initialize each mod in this order.
+    }
+}
+```
+
+The returned plan contains the dependency report and a deterministic,
+dependency-first list of enabled mod IDs. Missing required dependencies,
+version mismatches, declared conflicts, invalid versions, duplicate manifests
+and dependency cycles prevent the plan from being considered ready. An empty
+plan is not considered ready.
+
+**Safety boundary:** ModLoader currently prepares and validates metadata only.
+It does not discover files on disk, extract `.okapy` archives, load shared
+libraries, execute entrypoints, or change mod states. Native loading and
+lifecycle execution require a separate platform backend and additional
+validation before untrusted mod code can run.
 
 ## EventSystem
 
