@@ -2,6 +2,7 @@
 
 #include <okapy/event_system.hpp>
 #include <okapy/hook_manager.hpp>
+#include <okapy/mod_abi.hpp>
 #include <okapy/mod_lifecycle.hpp>
 #include <okapy/mod_loader.hpp>
 #include <okapy/mod_registry.hpp>
