@@ -3,6 +3,7 @@ add_library(okapy_core STATIC
     src/config_store.cpp
     src/mod_registry.cpp
     src/installed_mod_catalog.cpp
+    src/installed_package_store.cpp
     src/dependency_manager.cpp
     src/hook_manager.cpp
     src/patch_manager.cpp
@@ -30,6 +31,9 @@ if(BUILD_TESTING)
     add_executable(okapy_installed_mod_catalog_tests tests/test_installed_mod_catalog.cpp)
     target_link_libraries(okapy_installed_mod_catalog_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_installed_mod_catalog_tests COMMAND okapy_installed_mod_catalog_tests)
+    add_executable(okapy_installed_package_store_tests tests/test_installed_package_store.cpp)
+    target_link_libraries(okapy_installed_package_store_tests PRIVATE Okapy::Core)
+    add_test(NAME okapy_installed_package_store_tests COMMAND okapy_installed_package_store_tests)
     add_executable(okapy_core_tests tests/test_mod_registry.cpp)
     target_link_libraries(okapy_core_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_core_tests COMMAND okapy_core_tests)
