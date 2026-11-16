@@ -98,6 +98,17 @@ class MainActivity : Activity() {
         }
         page.addView(refreshButton, spaced(0, 10).apply { height = dp(48) })
 
+        val modsButton = Button(this).apply {
+            text = "Manage installed mods"
+            isAllCaps = false
+            setTextColor(Color.WHITE)
+            background = rounded(Color.rgb(39, 54, 66), 14)
+            setOnClickListener {
+                startActivity(Intent(this@MainActivity, ModLibraryActivity::class.java))
+            }
+        }
+        page.addView(modsButton, spaced(0, 10).apply { height = dp(48) })
+
         val infoCard = card()
         val infoTitle = TextView(this).apply {
             text = "ABOUT THIS BUILD"
