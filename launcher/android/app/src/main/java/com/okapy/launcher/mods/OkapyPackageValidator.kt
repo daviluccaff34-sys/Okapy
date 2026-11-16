@@ -55,7 +55,7 @@ object OkapyPackageValidator {
                     if (entryCount > MAX_ARCHIVE_ENTRIES) {
                         return failure("Package contains too many files.")
                     }
-                    if (!isSafeArchivePath(entry.name)) {
+                    if (!isSafeArchivePath(entry.name, entry.isDirectory)) {
                         return failure("Package contains an unsafe archive path.")
                     }
                     if (!entryNames.add(entry.name)) {
@@ -145,11 +145,13 @@ object OkapyPackageValidator {
         }
     }
 
-    private fun isSafeArchivePath(path: String): Boolean {
+    private fun isSafeArchivePath(path: String, isDirectory: Boolean): Boolean {
         if (path.isBlank() || path.startsWith("/") || path.startsWith("\\") ||
             path.contains('\\') || path.contains(':')
         ) return false
-        val segments = path.split("/")
+        val normalized = if (isDirectory) path.removeSuffix("/") else path
+        if (normalized.isBlank()) return false
+        val segments = normalized.split("/")
         return segments.none { it == ".." || it == "." || it.isEmpty() }
     }
 
