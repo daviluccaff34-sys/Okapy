@@ -4,7 +4,11 @@ Launcher e futuro mod loader para Geometry Dash.
 
 ## Sobre
 
-O Okapy é um projeto independente para iniciar e, futuramente, carregar e gerenciar mods do Geometry Dash. O formato planejado para pacotes de mods é `.okapy`.
+O Okapy é um projeto independente para iniciar e carregar/gerenciar mods do Geometry Dash. O formato planejado para pacotes de mods é `.okapy`.
+
+## Versão
+
+A versão inicial de desenvolvimento é **0.00.1**. A primeira versão Beta planejada será **0.01.1**. O APK só será publicado quando os recursos previstos para a respectiva versão estiverem implementados e testados.
 
 ## Estado atual
 
