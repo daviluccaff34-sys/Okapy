@@ -1,34 +1,34 @@
 # Okapy roadmap
 
-A feature is complete only after implementation and testing on a documented device and game version.
+A feature is complete only after implementation and testing on a documented device and game version. APK releases are not published just to mark development milestones.
 
-## v0.1.0 — Android launcher foundation
+## Version plan
+
+- **0.00.1** — initial development version.
+- **0.01.1 Beta** — first Beta release, after the planned launcher and mod-loading features are implemented and tested.
+- Later versions will be defined as development progresses.
+
+## v0.00.1 — initial development
 
 - [x] Choose Android as the first target platform.
 - [x] Create the initial Kotlin Android application project.
 - [x] Create the launcher screen.
 - [x] Detect the Geometry Dash Android package.
 - [x] Add an explicit launch action for an installed game.
-- [ ] Build and install a debug APK.
-- [ ] Test detection and launching on a real Android device.
-- [ ] Improve diagnostics and handle unsupported game versions.
+- [ ] Continue implementing the complete launcher and mod-loading architecture.
 
-## v0.2.0 — Launcher reliability
+## v0.01.1 Beta — first Beta
 
-- [ ] Add a dedicated diagnostics/log screen.
-- [ ] Add persistent launcher settings.
-- [ ] Design safe recovery behavior.
-- [ ] Add compatibility checks for supported game versions.
+- [ ] Complete the launcher experience.
+- [ ] Specify and implement the `.okapy` package format and metadata schema.
+- [ ] Implement mod discovery, installation, loading, and management.
+- [ ] Implement dependency and incompatibility handling.
+- [ ] Add safe recovery behavior, diagnostics, and logs.
+- [ ] Verify compatibility with documented Geometry Dash versions.
+- [ ] Test the complete application on real Android devices.
+- [ ] Fix release-blocking issues before publishing the Beta APK.
 
-## Later: mod runtime
-
-- [ ] Specify the `.okapy` package format and metadata schema.
-- [ ] Define mod lifecycle states and error reporting.
-- [ ] Design dependency and incompatibility handling.
-- [ ] Research Android-specific native loading and integration requirements.
-- [ ] Build and test a minimal example mod before claiming mod support.
-
-## Later: developer tools and distribution
+## Developer tools and distribution
 
 - [ ] Define the Okapy SDK and project template.
 - [ ] Create package validation/build tooling.
