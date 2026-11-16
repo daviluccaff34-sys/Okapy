@@ -2,6 +2,7 @@ add_library(okapy_core STATIC
     src/core.cpp
     src/mod_registry.cpp
     src/dependency_manager.cpp
+    src/hook_manager.cpp
 )
 
 add_library(Okapy::Core ALIAS okapy_core)
@@ -31,4 +32,8 @@ if(BUILD_TESTING)
     add_executable(okapy_event_tests tests/test_event_system.cpp)
     target_link_libraries(okapy_event_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_event_tests COMMAND okapy_event_tests)
+
+    add_executable(okapy_hook_tests tests/test_hook_manager.cpp)
+    target_link_libraries(okapy_hook_tests PRIVATE Okapy::Core)
+    add_test(NAME okapy_hook_tests COMMAND okapy_hook_tests)
 endif()
