@@ -5,6 +5,7 @@ add_library(okapy_core STATIC
     src/hook_manager.cpp
     src/patch_manager.cpp
     src/mod_loader.cpp
+    src/native_module.cpp
 )
 
 add_library(Okapy::Core ALIAS okapy_core)
@@ -16,6 +17,7 @@ target_include_directories(okapy_core
 )
 
 target_compile_features(okapy_core PUBLIC cxx_std_17)
+target_link_libraries(okapy_core PRIVATE ${CMAKE_DL_LIBS})
 set_target_properties(okapy_core PROPERTIES
     POSITION_INDEPENDENT_CODE ON
     CXX_EXTENSIONS OFF
@@ -46,4 +48,18 @@ if(BUILD_TESTING)
     add_executable(okapy_mod_loader_tests tests/test_mod_loader.cpp)
     target_link_libraries(okapy_mod_loader_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_mod_loader_tests COMMAND okapy_mod_loader_tests)
+
+    add_library(okapy_test_native_module MODULE tests/native_test_module.cpp)
+    set_target_properties(okapy_test_native_module PROPERTIES
+        CXX_VISIBILITY_PRESET default
+        VISIBILITY_INLINES_HIDDEN OFF
+    )
+
+    add_executable(okapy_native_module_tests tests/test_native_module.cpp)
+    target_link_libraries(okapy_native_module_tests PRIVATE Okapy::Core)
+    target_compile_definitions(okapy_native_module_tests PRIVATE
+        OKAPY_TEST_MODULE_PATH="$<TARGET_FILE:okapy_test_native_module>"
+    )
+    add_dependencies(okapy_native_module_tests okapy_test_native_module)
+    add_test(NAME okapy_native_module_tests COMMAND okapy_native_module_tests)
 endif()
