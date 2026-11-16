@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <utility>
@@ -29,7 +30,10 @@ NativeModLoadResult NativeModLoader::load(
     }
 
     auto loaded = std::make_shared<LoadedMod>();
-    loaded->host = hostApi;
+    const auto hostBytes = std::min<std::size_t>(
+        hostApi.struct_size, sizeof(OkapyHostApiV1));
+    std::memcpy(&loaded->host, &hostApi, hostBytes);
+    loaded->host.struct_size = static_cast<std::uint32_t>(hostBytes);
 
     if (loaded->library.load(absolutePath) != NativeModuleResult::Loaded) {
         return NativeModLoadResult::LibraryLoadFailed;
