@@ -96,33 +96,39 @@ std::string InstalledPackageStore::packagePath(std::string_view modId) const {
 PackageStoreResult InstalledPackageStore::registerInstalled(
     ModInfo mod, ModManifest manifest) {
     if (!ModRegistry::isValidId(mod.id)) return PackageStoreResult::InvalidMod;
-    const auto path = packagePath(mod.id);
-    if (path.empty()) return PackageStoreResult::MissingPackage;
 
-    mod.packagePath = path;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_root.empty()) return PackageStoreResult::StorageError;
+    const std::filesystem::path rootDirectory(m_root);
+    std::filesystem::path canonical;
+    if (!isDirectPackageDirectory(
+            rootDirectory, rootDirectory / mod.id, canonical)) {
+        return PackageStoreResult::MissingPackage;
+    }
+
+    mod.packagePath = canonical.string();
     const auto result = m_catalog.install(std::move(mod), std::move(manifest));
     if (result == CatalogResult::Added) return PackageStoreResult::Registered;
     if (result == CatalogResult::InvalidMod) return PackageStoreResult::InvalidMod;
-    if (result == CatalogResult::ManifestMismatch) return PackageStoreResult::CatalogRejected;
-    if (result == CatalogResult::AlreadyExists) return PackageStoreResult::CatalogRejected;
     return PackageStoreResult::CatalogRejected;
 }
 
 PackageStoreResult InstalledPackageStore::uninstall(std::string_view modId) {
     if (!ModRegistry::isValidId(modId)) return PackageStoreResult::InvalidMod;
 
-    const auto current = m_catalog.manifest(modId);
-    if (!current) return PackageStoreResult::NotFound;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_root.empty()) return PackageStoreResult::StorageError;
+    if (!m_catalog.manifest(modId)) return PackageStoreResult::NotFound;
 
-    const auto path = packagePath(modId);
-    if (path.empty()) return PackageStoreResult::MissingPackage;
+    const std::filesystem::path rootDirectory(m_root);
+    std::filesystem::path packageDirectory;
+    if (!isDirectPackageDirectory(
+            rootDirectory, rootDirectory / std::string(modId), packageDirectory)) {
+        return PackageStoreResult::MissingPackage;
+    }
 
     // Stage the directory rename first. The catalog is changed only after the
     // package is safely out of its public location; failed catalog changes roll back.
-    const auto rootPath = root();
-    const std::filesystem::path rootDirectory(rootPath);
-    const std::filesystem::path packageDirectory(path);
-
     const auto tombstoneName = std::string(".okapy-remove-") +
         std::string(modId) + "-" +
         std::to_string(g_removalSequence.fetch_add(1, std::memory_order_relaxed));
