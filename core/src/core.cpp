@@ -43,4 +43,12 @@ const PatchManager& Core::patches() const noexcept {
     return m_patchManager;
 }
 
+ModLoader& Core::loader() noexcept {
+    return m_modLoader;
+}
+
+const ModLoader& Core::loader() const noexcept {
+    return m_modLoader;
+}
+
 } // namespace okapy
