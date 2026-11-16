@@ -56,6 +56,7 @@ public:
 
     ListenerHandle(ListenerHandle&& other) noexcept
         : m_state(std::move(other.m_state)),
+          m_listener(std::move(other.m_listener)),
           m_type(other.m_type),
           m_id(std::exchange(other.m_id, 0)) {}
 
@@ -63,6 +64,7 @@ public:
         if (this != &other) {
             reset();
             m_state = std::move(other.m_state);
+            m_listener = std::move(other.m_listener);
             m_type = other.m_type;
             m_id = std::exchange(other.m_id, 0);
         }
@@ -91,19 +93,24 @@ public:
         }
         m_id = 0;
         m_state.reset();
+        m_listener.reset();
     }
 
     [[nodiscard]] bool isActive() const noexcept {
-        return m_id != 0 && !m_state.expired();
+        const auto listener = m_listener.lock();
+        return m_id != 0 && listener && listener->active.load(std::memory_order_acquire);
     }
 
 private:
     friend class EventBus;
     ListenerHandle(std::weak_ptr<detail::EventBusState> state,
+                   std::weak_ptr<detail::EventListenerBase> listener,
                    std::type_index type, std::size_t id)
-        : m_state(std::move(state)), m_type(type), m_id(id) {}
+        : m_state(std::move(state)), m_listener(std::move(listener)),
+          m_type(type), m_id(id) {}
 
     std::weak_ptr<detail::EventBusState> m_state;
+    std::weak_ptr<detail::EventListenerBase> m_listener;
     std::type_index m_type{typeid(void)};
     std::size_t m_id = 0;
 };
@@ -127,7 +134,7 @@ public:
             std::lock_guard<std::mutex> lock(m_state->mutex);
             m_state->listeners[std::type_index(typeid(Event))].push_back(slot);
         }
-        return ListenerHandle{m_state, std::type_index(typeid(Event)), id};
+        return ListenerHandle{m_state, slot, std::type_index(typeid(Event)), id};
     }
 
     template <typename Event>
