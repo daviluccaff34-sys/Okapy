@@ -10,6 +10,8 @@ bool Core::isInitialized() const noexcept { return m_initialized; }
 ModRegistry& Core::mods() noexcept { return m_modRegistry; }
 InstalledModCatalog& Core::installedMods() noexcept { return m_installedModCatalog; }
 const InstalledModCatalog& Core::installedMods() const noexcept { return m_installedModCatalog; }
+InstalledPackageStore& Core::packageStore() noexcept { return m_packageStore; }
+const InstalledPackageStore& Core::packageStore() const noexcept { return m_packageStore; }
 const ModRegistry& Core::mods() const noexcept { return m_modRegistry; }
 EventBus& Core::events() noexcept { return m_eventBus; }
 const EventBus& Core::events() const noexcept { return m_eventBus; }
