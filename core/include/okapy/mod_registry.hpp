@@ -44,7 +44,7 @@ public:
 
     [[nodiscard]] std::optional<ModInfo> find(std::string_view id) const;
     [[nodiscard]] std::vector<ModInfo> list() const;
-    [[nodiscard]] std::size_t size() const noexcept;
+    [[nodiscard]] std::size_t size() const;
     void clear();
 
 private:
