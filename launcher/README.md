@@ -23,7 +23,7 @@ The initial project is in `android/` and uses Kotlin with the Android SDK.
 - Mod management and `.okapy` package installation.
 - Automated game-version compatibility checks.
 
-The current app is an early launcher shell, not yet a mod loader. It does not download Geometry Dash or bypass its official distribution.
+The Android app can import, validate, install, list, update, and uninstall `.okapy` packages in app-private storage. Package import checks the installed game's package ID, version name, and supported Android ABIs. This is package management only: native entrypoints are not executed and mods are not loaded into Geometry Dash yet. The app does not download Geometry Dash or bypass its official distribution.
 
 ## Build
 
