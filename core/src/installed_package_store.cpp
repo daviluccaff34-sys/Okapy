@@ -123,6 +123,8 @@ PackageStoreResult InstalledPackageStore::uninstall(std::string_view modId) {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_root.empty()) return PackageStoreResult::StorageError;
     if (!m_catalog.manifest(modId)) return PackageStoreResult::NotFound;
+    // Do not even rename a package while the catalog marks it enabled.
+    if (m_catalog.isEnabled(modId)) return PackageStoreResult::ModEnabled;
 
     const std::filesystem::path rootDirectory(m_root);
     std::filesystem::path packageDirectory;
