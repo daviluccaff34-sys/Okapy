@@ -49,6 +49,15 @@ RegistryResult ModRegistry::add(ModInfo mod) {
     return inserted ? RegistryResult::Added : RegistryResult::DuplicateId;
 }
 
+bool ModRegistry::replace(ModInfo mod) {
+    if (!isValidId(mod.id)) return false;
+    std::unique_lock lock(m_mutex);
+    const auto it = m_mods.find(mod.id);
+    if (it == m_mods.end()) return false;
+    it->second = std::move(mod);
+    return true;
+}
+
 bool ModRegistry::remove(std::string_view id) {
     std::unique_lock lock(m_mutex);
     return m_mods.erase(std::string(id)) != 0;
