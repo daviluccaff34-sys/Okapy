@@ -4,6 +4,7 @@ add_library(okapy_core STATIC
     src/mod_registry.cpp
     src/installed_mod_catalog.cpp
     src/installed_package_store.cpp
+    src/package_manifest.cpp
     src/dependency_manager.cpp
     src/hook_manager.cpp
     src/patch_manager.cpp
@@ -28,6 +29,9 @@ set_target_properties(okapy_core PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_EXT
 
 include(CTest)
 if(BUILD_TESTING)
+    add_executable(okapy_package_manifest_tests tests/test_package_manifest.cpp)
+    target_link_libraries(okapy_package_manifest_tests PRIVATE Okapy::Core)
+    add_test(NAME okapy_package_manifest_tests COMMAND okapy_package_manifest_tests)
     add_executable(okapy_installed_mod_catalog_tests tests/test_installed_mod_catalog.cpp)
     target_link_libraries(okapy_installed_mod_catalog_tests PRIVATE Okapy::Core)
     add_test(NAME okapy_installed_mod_catalog_tests COMMAND okapy_installed_mod_catalog_tests)
