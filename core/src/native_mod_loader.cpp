@@ -20,7 +20,8 @@ NativeModLoadResult NativeModLoader::load(
     std::string_view absolutePath,
     ModLifecycleManager& lifecycle,
     const OkapyHostApiV1& hostApi,
-    NativeModLoadInfo* outInfo,\n    std::string_view expectedModId) {
+    NativeModLoadInfo* outInfo,
+    std::string_view expectedModId) {
     constexpr auto hostMinimum =
         static_cast<std::uint32_t>(offsetof(OkapyHostApiV1, log) +
             sizeof(((OkapyHostApiV1*)nullptr)->log));
