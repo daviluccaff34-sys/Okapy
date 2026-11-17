@@ -20,7 +20,7 @@ NativeModLoadResult NativeModLoader::load(
     std::string_view absolutePath,
     ModLifecycleManager& lifecycle,
     const OkapyHostApiV1& hostApi,
-    NativeModLoadInfo* outInfo) {
+    NativeModLoadInfo* outInfo,\n    std::string_view expectedModId) {
     constexpr auto hostMinimum =
         static_cast<std::uint32_t>(offsetof(OkapyHostApiV1, log) +
             sizeof(((OkapyHostApiV1*)nullptr)->log));
@@ -59,6 +59,9 @@ NativeModLoadResult NativeModLoader::load(
 
     if (!ModRegistry::isValidId(loaded->info.id)) {
         return NativeModLoadResult::InvalidModId;
+    }
+    if (!expectedModId.empty() && loaded->info.id != expectedModId) {
+        return NativeModLoadResult::ManifestIdMismatch;
     }
     if (m_loaded.find(loaded->info.id) != m_loaded.end()) {
         return NativeModLoadResult::DuplicateMod;
