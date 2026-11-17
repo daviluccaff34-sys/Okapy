@@ -31,7 +31,7 @@ NativeModLoadResult Core::loadInstalledMod(
     if (!m_initialized || !m_installedModCatalog.manifest(modId))
         return NativeModLoadResult::InvalidModId;
     const auto libraryPath = m_packageStore.entrypointPath(modId, androidAbi);
-    if (libraryPath.empty()) return NativeModLoadResult::LibraryLoadFailed;
+    if (libraryPath.empty()) return NativeModLoadResult::EntrypointNotFound;
     const auto api = hostApi();
     return m_nativeModLoader.load(
         libraryPath, m_lifecycleManager, api, outInfo, modId);
