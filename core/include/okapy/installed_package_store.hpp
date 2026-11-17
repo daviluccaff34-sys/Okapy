@@ -11,10 +11,12 @@ namespace okapy {
 
 enum class PackageStoreResult {
     Registered,
+    AlreadyRegistered,
     Removed,
     RemovedWithCleanupPending,
     NotFound,
     InvalidMod,
+    InvalidManifest,
     MissingPackage,
     UnsafePath,
     ModEnabled,
@@ -22,9 +24,14 @@ enum class PackageStoreResult {
     StorageError
 };
 
+struct PackageDiscovery {
+    std::string packageId;
+    PackageStoreResult result = PackageStoreResult::StorageError;
+    std::string error;
+};
+
 // Filesystem boundary for already-extracted .okapy package directories.
-// Manifest parsing and archive extraction remain the responsibility of the
-// package-validation/installation layer; metadata is supplied by that layer.
+// It parses root manifests but does not inspect ZIP archives or load code.
 class InstalledPackageStore final {
 public:
     explicit InstalledPackageStore(InstalledModCatalog& catalog) noexcept;
@@ -33,6 +40,7 @@ public:
     [[nodiscard]] std::string root() const;
     [[nodiscard]] std::vector<std::string> listPackageIds() const;
     [[nodiscard]] std::string packagePath(std::string_view modId) const;
+    [[nodiscard]] std::vector<PackageDiscovery> discoverInstalled();
 
     PackageStoreResult registerInstalled(ModInfo mod, ModManifest manifest);
     PackageStoreResult uninstall(std::string_view modId);
