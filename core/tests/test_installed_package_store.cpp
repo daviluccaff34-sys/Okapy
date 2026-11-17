@@ -48,7 +48,7 @@ int main() {
     assert(store.packagePath("../outside").empty());
     assert(store.entrypointPath("example.mod", "arm64-v8a") ==
            fs::canonical(root / "example.mod" / "libs" / "libexample.so").string());
-    assert(store.entrypointPath("example.mod", "x86") .empty());
+    assert(store.entrypointPath("example.mod", "x86").empty());
 
     const auto discoveries = store.discoverInstalled();
     assert(discoveries.size() == 1);
