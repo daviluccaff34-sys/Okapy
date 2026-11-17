@@ -101,6 +101,58 @@ std::string InstalledPackageStore::packagePath(std::string_view modId) const {
     return canonical.string();
 }
 
+std::string InstalledPackageStore::entrypointPath(
+    std::string_view modId, std::string_view androidAbi) const {
+    if (!ModRegistry::isValidId(modId) || androidAbi.empty()) return {};
+    const auto directory = packagePath(modId);
+    if (directory.empty()) return {};
+
+    const auto manifestPath = std::filesystem::path(directory) / "okapy.json";
+    std::error_code error;
+    const auto manifestStatus = std::filesystem::symlink_status(manifestPath, error);
+    if (error || std::filesystem::is_symlink(manifestStatus) ||
+        !std::filesystem::is_regular_file(manifestStatus)) return {};
+    const auto size = std::filesystem::file_size(manifestPath, error);
+    if (error || size == 0 || size > kMaxManifestBytes) return {};
+
+    std::ifstream input(manifestPath, std::ios::binary);
+    if (!input) return {};
+    std::string contents((std::istreambuf_iterator<char>(input)),
+                         std::istreambuf_iterator<char>());
+    if (contents.size() != size) return {};
+
+    const auto parsed = parsePackageManifest(contents, directory);
+    if (!parsed.valid || parsed.mod.id != modId) return {};
+    const auto found = parsed.androidEntrypoints.find(std::string(androidAbi));
+    if (found == parsed.androidEntrypoints.end()) return {};
+
+    const std::filesystem::path packageDirectory(directory);
+    const std::filesystem::path relative(found->second);
+    auto current = packageDirectory;
+    for (auto it = relative.begin(); it != relative.end(); ++it) {
+        current /= *it;
+        const auto status = std::filesystem::symlink_status(current, error);
+        if (error || std::filesystem::is_symlink(status)) return {};
+        const bool last = std::next(it) == relative.end();
+        if (last) {
+            if (!std::filesystem::is_regular_file(status)) return {};
+        } else if (!std::filesystem::is_directory(status)) {
+            return {};
+        }
+    }
+
+    const auto canonicalPackage = std::filesystem::canonical(packageDirectory, error);
+    if (error) return {};
+    const auto canonicalFile = std::filesystem::canonical(current, error);
+    if (error || canonicalFile.parent_path() == canonicalFile) return {};
+    const auto relativeToPackage = canonicalFile.lexically_relative(canonicalPackage);
+    if (relativeToPackage.empty() || relativeToPackage.is_absolute()) return {};
+    for (const auto& part : relativeToPackage) {
+        if (part == "..") return {};
+    }
+    return canonicalFile.string();
+}
+
 std::vector<PackageDiscovery> InstalledPackageStore::discoverInstalled() {
     std::vector<PackageDiscovery> discoveries;
     const auto ids = listPackageIds();
