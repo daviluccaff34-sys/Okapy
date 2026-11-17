@@ -16,6 +16,7 @@ enum class NativeModLoadResult {
     Registered,
     InvalidHostApi,
     LibraryLoadFailed,
+    EntrypointNotFound,
     MissingQuerySymbol,
     QueryRejected,
     InvalidAbi,
