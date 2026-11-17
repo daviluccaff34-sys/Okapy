@@ -1,6 +1,6 @@
 # Okapy package format (.okapy)
 
-**Status:** Draft 0.1 — the Android archive installer/validator and native manifest parser/store are implemented in source, but no build or test has been run for this revision.
+**Status:** Draft 0.1 — Android archive installation, native manifest parsing, installed entrypoint validation, and the explicit Core-to-native-loader call path are implemented in source. No build or test has been run for this revision.
 
 This document defines the first proposed structure for Okapy mod packages. The format must remain explicit, inspectable, and versioned so the in-game Okapy interface can reject packages it cannot safely understand.
 
@@ -91,10 +91,10 @@ The native parser is declared in `core/include/okapy/package_manifest.hpp` and i
 
 `InstalledPackageStore::discoverInstalled()` scans direct child package directories under its configured root, reads only a regular root `okapy.json` (without following a manifest symlink), parses it, requires the manifest ID to match the directory name, and registers metadata in the in-memory catalog. Repeated scans report already-registered packages instead of duplicating them. Invalid packages are reported individually so one bad manifest does not stop discovery of other directories.
 
-This parser validates manifest structure and safe relative path syntax only. It does not inspect ZIP contents, prove that an entrypoint file exists, validate the current game version or device ABI, download packages, persist catalog state, or load native libraries. The Kotlin manager and C++ store are not yet connected through JNI, and the store does not itself stop running native modules.
+The parser validates manifest structure and safe relative path syntax. `InstalledPackageStore::entrypointPath(modId, abi)` reparses the installed manifest and returns a canonical entrypoint path only if the declared file exists as a regular file inside the package; symlink components are rejected. `Core::loadInstalledMod()` passes that path to `NativeModLoader` and checks that the library-reported mod ID matches the manifest ID. Calling it loads the shared library and invokes its ABI query function, so it executes code from that library; the caller must obtain user consent first. This path does not yet initialize/start the mod lifecycle, verify the current Geometry Dash version or process ABI automatically, verify package signatures/hashes, persist catalog state, or connect the Kotlin package manager through JNI. The store also does not itself stop running native modules.
 
 ## 6. Android implementation status
 
 The Android archive/manifest validator is in `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyPackageValidator.kt`. The extraction implementation is in `OkapyPackageInstaller.kt`; it revalidates, extracts into a staging directory, enforces entry/expanded-size limits and safe paths, then renames the staging directory into place. Existing installs are preserved during an update attempt and restored if the new staging directory cannot be promoted. The management API is in `OkapyModManager.kt`: it exposes install, update, listInstalled, and uninstall operations against an app-private storage root. Listing checks each installed manifest and directory identity; uninstall refuses paths outside the managed root.
 
-Repository downloads, package signing, and the native in-game Cocos2d-x management interface are not implemented.
+Repository downloads, package signing, lifecycle activation/deactivation orchestration, and the native in-game Cocos2d-x management interface are not implemented.
