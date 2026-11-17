@@ -18,9 +18,15 @@ int main() {
         testLog
     };
 
+    // The package manifest ID must match the identity reported by the native ABI.
+    assert(loader.load(OKAPY_ABI_TEST_MODULE_PATH, lifecycle, host,
+                       nullptr, "different.package") ==
+           okapy::NativeModLoadResult::ManifestIdMismatch);
+    assert(!loader.contains("fixture.test"));
+
     okapy::NativeModLoadInfo info;
     const auto result = loader.load(
-        OKAPY_ABI_TEST_MODULE_PATH, lifecycle, host, &info);
+        OKAPY_ABI_TEST_MODULE_PATH, lifecycle, host, &info, "fixture.test");
     assert(result == okapy::NativeModLoadResult::Registered);
     assert(info.id == "fixture.test");
     assert(info.name == "Okapy ABI Test Fixture");
