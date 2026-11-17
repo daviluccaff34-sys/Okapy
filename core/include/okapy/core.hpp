@@ -31,6 +31,18 @@ struct ModEvent final {
     std::string payload;
 };
 
+enum class InstalledModEnableResult {
+    Enabled,
+    ConsentRequired,
+    NotInitialized,
+    NotFound,
+    AlreadyEnabled,
+    DependencyError,
+    NativeLoadFailed,
+    LifecycleFailed,
+    CatalogUpdateFailed
+};
+
 class Core final {
 public:
     bool initialize() noexcept;
@@ -54,10 +66,14 @@ public:
     [[nodiscard]] PermissionManager& permissions() noexcept;
     [[nodiscard]] const PermissionManager& permissions() const noexcept;
     [[nodiscard]] OkapyHostApiV1 hostApi() noexcept;
-    // Explicitly loads/query-registers the native library selected by the installed package manifest.
-    // This executes code from that library; callers must obtain the user's consent first.
+    // Loading/querying native libraries executes their code. Call only after explicit user consent.
     NativeModLoadResult loadInstalledMod(
         std::string_view modId, std::string_view androidAbi,
+        NativeModLoadInfo* outInfo = nullptr);
+    // Enables one installed mod and its already-enabled dependency chain.
+    // userConsent must be true only after the UI has shown the native-code consent prompt.
+    InstalledModEnableResult enableInstalledMod(
+        std::string_view modId, std::string_view androidAbi, bool userConsent,
         NativeModLoadInfo* outInfo = nullptr);
     [[nodiscard]] NativeModLoader& nativeMods() noexcept;
     [[nodiscard]] const NativeModLoader& nativeMods() const noexcept;
