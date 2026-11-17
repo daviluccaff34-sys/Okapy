@@ -2,6 +2,7 @@
 
 #include <okapy/mod_registry.hpp>
 
+#include <algorithm>
 #include <cctype>
 #include <cstdint>
 #include <map>
@@ -279,6 +280,11 @@ bool readStringArray(const JsonValue* value, std::vector<std::string>& output,
         }
         output.push_back(*text);
     }
+    std::sort(output.begin(), output.end());
+    if (std::adjacent_find(output.begin(), output.end()) != output.end()) {
+        error = field + " contains duplicate IDs.";
+        return false;
+    }
     return true;
 }
 
@@ -342,22 +348,18 @@ ParsedPackageManifest parsePackageManifest(std::string_view json, std::string pa
     }
 
     result.dependencies.id = *id;
-    if (!readStringArray(member(*object, "dependencies"),
-                         result.dependencies.dependencies, "dependencies", result.error)) return result;
-    std::vector<std::string> conflicts;
-    if (!readStringArray(member(*object, "conflicts"), conflicts, "conflicts", result.error)) return result;
-    for (const auto& dependency : result.dependencies.dependencies) {
-        if (dependency == *id) { result.error = "A mod cannot depend on itself."; return result; }
+    std::vector<std::string> dependencyIds;
+    if (!readStringArray(member(*object, "dependencies"), dependencyIds,
+                         "dependencies", result.error)) return result;
+    for (const auto& dependencyId : dependencyIds) {
+        if (dependencyId == *id) { result.error = "A mod cannot depend on itself."; return result; }
+        result.dependencies.dependencies.push_back({dependencyId, {}, false});
     }
-    for (const auto& conflict : conflicts) {
+    if (!readStringArray(member(*object, "conflicts"), result.dependencies.conflicts,
+                         "conflicts", result.error)) return result;
+    for (const auto& conflict : result.dependencies.conflicts) {
         if (conflict == *id) { result.error = "A mod cannot conflict with itself."; return result; }
     }
-    std::sort(conflicts.begin(), conflicts.end());
-    if (std::adjacent_find(conflicts.begin(), conflicts.end()) != conflicts.end()) {
-        result.error = "Conflict list contains duplicate IDs.";
-        return result;
-    }
-    result.dependencies.conflicts = std::move(conflicts);
 
     const auto* description = stringValue(member(*object, "description"));
     if (member(*object, "description") && !description) {
