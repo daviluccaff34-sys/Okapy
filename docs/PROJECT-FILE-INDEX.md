@@ -2,8 +2,8 @@
 
 **Purpose:** authoritative path inventory for the current `main` branch. Update this document whenever a project file is created, removed, renamed, or moved. Before editing an existing file, fetch its current version from GitHub; do not rely on an old local copy.
 
-**Last inventory check:** 2026-11-16  
-**Tracked files at check:** 75
+**Last inventory check:** 2026-11-17  
+**Tracked files at check:** 78
 
 ## Repository root
 
@@ -37,6 +37,7 @@
 - `core/include/okapy/mod_registry.hpp`
 - `core/include/okapy/native_mod_loader.hpp`
 - `core/include/okapy/native_module.hpp`
+- `core/include/okapy/package_manifest.hpp`
 - `core/include/okapy/patch_manager.hpp`
 - `core/include/okapy/permission_manager.hpp`
 
@@ -54,6 +55,7 @@
 - `core/src/mod_registry.cpp`
 - `core/src/native_mod_loader.cpp`
 - `core/src/native_module.cpp`
+- `core/src/package_manifest.cpp`
 - `core/src/patch_manager.cpp`
 
 ## Core — tests and test modules
@@ -73,6 +75,7 @@
 - `core/tests/test_mod_registry.cpp`
 - `core/tests/test_native_mod_loader.cpp`
 - `core/tests/test_native_module.cpp`
+- `core/tests/test_package_manifest.cpp`
 - `core/tests/test_patch_manager.cpp`
 - `core/tests/test_permission_system.cpp`
 
@@ -100,38 +103,3 @@
 ## Android JNI / C++ bridge
 
 - `launcher/android/app/src/main/cpp/CMakeLists.txt`
-- `launcher/android/app/src/main/cpp/native-lib.cpp`
-
-## Android Kotlin application
-
-- `launcher/android/app/src/main/java/com/okapy/launcher/MainActivity.kt`
-- `launcher/android/app/src/main/java/com/okapy/launcher/ModLibraryActivity.kt`
-- `launcher/android/app/src/main/java/com/okapy/launcher/OkapyNative.kt`
-
-## Android package management
-
-- `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyModManager.kt`
-- `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyPackageInstaller.kt`
-- `launcher/android/app/src/main/java/com/okapy/launcher/mods/OkapyPackageValidator.kt`
-
-## Android resources
-
-- `launcher/android/app/src/main/res/values/strings.xml`
-- `launcher/android/app/src/main/res/values/styles.xml`
-
-## Product requirement — mod management happens in-game
-
-The primary user-facing place to discover, install, update, enable, disable, and remove mods is the **Okapy interface rendered inside Geometry Dash**. This interface must be part of the game's Cocos2d-x scene graph and lifecycle. It is not an Android Activity, WebView, floating overlay, or separate launcher screen.
-
-The Android `ModLibraryActivity` and Kotlin package manager currently form an early package-management/development path. They must not become the final primary mod-management experience. The eventual in-game UI will call the appropriate native/runtime services for repository browsing, package download and validation, installation, activation state, disabling, and removal.
-
-Disabling a running native mod may initially take effect on the next game launch if safe live unloading is not yet supported. The in-game interface must clearly explain that behavior. Removal must safely stop or disable the mod before deleting its files.
-
-## File-change discipline
-
-1. Treat this index as the project-wide file map, not as a substitute for reading source.
-2. Fetch the current GitHub file before modifying it and use its current blob SHA.
-3. Keep existing architecture and package-format documents synchronized with implementation.
-4. When adding or moving files, update this index in the same work sequence.
-5. Never recreate an existing file under a guessed path or overwrite newer work with stale content.
-6. Do not claim a build or test passed unless it was actually run.
