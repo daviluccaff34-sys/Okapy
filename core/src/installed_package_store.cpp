@@ -1,8 +1,11 @@
 #include <okapy/installed_package_store.hpp>
+#include <okapy/package_manifest.hpp>
 
 #include <algorithm>
 #include <atomic>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <mutex>
 #include <system_error>
 #include <utility>
@@ -11,6 +14,7 @@ namespace okapy {
 namespace {
 
 std::atomic<unsigned long long> g_removalSequence{1};
+constexpr std::size_t kMaxManifestBytes = 64 * 1024;
 
 bool isDirectPackageDirectory(
     const std::filesystem::path& root,
@@ -97,6 +101,74 @@ std::string InstalledPackageStore::packagePath(std::string_view modId) const {
     return canonical.string();
 }
 
+std::vector<PackageDiscovery> InstalledPackageStore::discoverInstalled() {
+    std::vector<PackageDiscovery> discoveries;
+    const auto ids = listPackageIds();
+    discoveries.reserve(ids.size());
+
+    for (const auto& directoryId : ids) {
+        PackageDiscovery discovery;
+        discovery.packageId = directoryId;
+        const auto directory = packagePath(directoryId);
+        if (directory.empty()) {
+            discovery.result = PackageStoreResult::UnsafePath;
+            discovery.error = "Package directory failed canonical path validation.";
+            discoveries.push_back(std::move(discovery));
+            continue;
+        }
+
+        const auto manifestPath = std::filesystem::path(directory) / "okapy.json";
+        std::error_code error;
+        const auto fileSize = std::filesystem::file_size(manifestPath, error);
+        if (error || fileSize == 0 || fileSize > kMaxManifestBytes) {
+            discovery.result = PackageStoreResult::InvalidManifest;
+            discovery.error = "Manifest is unreadable, empty, or exceeds 64 KiB.";
+            discoveries.push_back(std::move(discovery));
+            continue;
+        }
+
+        std::ifstream input(manifestPath, std::ios::binary);
+        if (!input) {
+            discovery.result = PackageStoreResult::InvalidManifest;
+            discovery.error = "Manifest could not be opened.";
+            discoveries.push_back(std::move(discovery));
+            continue;
+        }
+        std::string contents((std::istreambuf_iterator<char>(input)),
+                             std::istreambuf_iterator<char>());
+        if (!input.eof() || contents.size() != fileSize) {
+            discovery.result = PackageStoreResult::InvalidManifest;
+            discovery.error = "Manifest read was incomplete.";
+            discoveries.push_back(std::move(discovery));
+            continue;
+        }
+
+        auto parsed = parsePackageManifest(contents, directory);
+        if (!parsed.valid || parsed.mod.id != directoryId) {
+            discovery.result = PackageStoreResult::InvalidManifest;
+            discovery.error = parsed.valid
+                ? "Manifest ID does not match its installed directory."
+                : std::move(parsed.error);
+            discoveries.push_back(std::move(discovery));
+            continue;
+        }
+
+        if (m_catalog.manifest(directoryId)) {
+            discovery.result = PackageStoreResult::AlreadyRegistered;
+            discoveries.push_back(std::move(discovery));
+            continue;
+        }
+
+        discovery.result = registerInstalled(
+            std::move(parsed.mod), std::move(parsed.dependencies));
+        if (discovery.result == PackageStoreResult::CatalogRejected) {
+            discovery.error = "The installed mod catalog rejected this manifest.";
+        }
+        discoveries.push_back(std::move(discovery));
+    }
+    return discoveries;
+}
+
 PackageStoreResult InstalledPackageStore::registerInstalled(
     ModInfo mod, ModManifest manifest) {
     if (!ModRegistry::isValidId(mod.id)) return PackageStoreResult::InvalidMod;
@@ -123,7 +195,6 @@ PackageStoreResult InstalledPackageStore::uninstall(std::string_view modId) {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_root.empty()) return PackageStoreResult::StorageError;
     if (!m_catalog.manifest(modId)) return PackageStoreResult::NotFound;
-    // Do not even rename a package while the catalog marks it enabled.
     if (m_catalog.isEnabled(modId)) return PackageStoreResult::ModEnabled;
 
     const std::filesystem::path rootDirectory(m_root);
@@ -133,8 +204,6 @@ PackageStoreResult InstalledPackageStore::uninstall(std::string_view modId) {
         return PackageStoreResult::MissingPackage;
     }
 
-    // Stage the directory rename first. The catalog is changed only after the
-    // package is safely out of its public location; failed catalog changes roll back.
     const auto tombstoneName = std::string(".okapy-remove-") +
         std::string(modId) + "-" +
         std::to_string(g_removalSequence.fetch_add(1, std::memory_order_relaxed));
