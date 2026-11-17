@@ -16,9 +16,19 @@ int main() {
     assert(!error);
 
     {
-        std::ofstream marker(root / "example.mod" / "okapy.json");
-        marker << "{\"id\":\"example.mod\"}";
-        assert(marker.good());
+        std::ofstream manifest(root / "example.mod" / "okapy.json");
+        manifest << R"json({
+            "formatVersion": 1,
+            "id": "example.mod",
+            "name": "Example",
+            "version": "1.0.0",
+            "developer": "Test author",
+            "game": {"id": "com.robtopx.geometryjump", "versions": ["2.2"]},
+            "entrypoints": {"android": {"arm64-v8a": "libs/libexample.so"}},
+            "dependencies": [],
+            "conflicts": []
+        })json";
+        assert(manifest.good());
     }
 
     okapy::ModRegistry registry;
@@ -31,16 +41,17 @@ int main() {
     assert(store.listPackageIds().front() == "example.mod");
     assert(store.packagePath("../outside").empty());
 
-    okapy::ModInfo info{
-        "example.mod", "Example", "1.0.0", "Test author", "",
-        okapy::ModState::Discovered
-    };
-    const okapy::ModManifest manifest{"example.mod", {}, {}};
-    assert(store.registerInstalled(info, manifest) ==
-        okapy::PackageStoreResult::Registered);
+    const auto discoveries = store.discoverInstalled();
+    assert(discoveries.size() == 1);
+    assert(discoveries.front().result == okapy::PackageStoreResult::Registered);
     const auto registered = registry.find("example.mod");
     assert(registered.has_value());
+    assert(registered->name == "Example");
     assert(registered->packagePath == fs::canonical(root / "example.mod").string());
+
+    const auto repeatedScan = store.discoverInstalled();
+    assert(repeatedScan.size() == 1);
+    assert(repeatedScan.front().result == okapy::PackageStoreResult::AlreadyRegistered);
 
     assert(catalog.setEnabled("example.mod", true));
     assert(store.uninstall("example.mod") == okapy::PackageStoreResult::ModEnabled);
