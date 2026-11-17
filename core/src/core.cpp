@@ -25,6 +25,17 @@ ConfigStore& Core::config() noexcept { return m_configStore; }
 const ConfigStore& Core::config() const noexcept { return m_configStore; }
 PermissionManager& Core::permissions() noexcept { return m_permissionManager; }
 const PermissionManager& Core::permissions() const noexcept { return m_permissionManager; }
+NativeModLoadResult Core::loadInstalledMod(
+    std::string_view modId, std::string_view androidAbi,
+    NativeModLoadInfo* outInfo) {
+    if (!m_initialized || !m_installedModCatalog.manifest(modId))
+        return NativeModLoadResult::InvalidModId;
+    const auto libraryPath = m_packageStore.entrypointPath(modId, androidAbi);
+    if (libraryPath.empty()) return NativeModLoadResult::LibraryLoadFailed;
+    const auto api = hostApi();
+    return m_nativeModLoader.load(
+        libraryPath, m_lifecycleManager, api, outInfo, modId);
+}
 NativeModLoader& Core::nativeMods() noexcept { return m_nativeModLoader; }
 const NativeModLoader& Core::nativeMods() const noexcept { return m_nativeModLoader; }
 ModLifecycleManager& Core::lifecycle() noexcept { return m_lifecycleManager; }
