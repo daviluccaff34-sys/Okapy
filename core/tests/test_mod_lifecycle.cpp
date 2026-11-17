@@ -37,6 +37,49 @@ void testStartAndReverseShutdown() {
         "start-base", "start-addon", "stop-addon", "stop-base"}));
 }
 
+void testIncrementalStartPreservesExistingModules() {
+    okapy::ModLifecycleManager lifecycle;
+    std::vector<std::string> calls;
+    lifecycle.registerModule("example.base", [&] {
+        calls.push_back("start-base"); return true;
+    }, [&] { calls.push_back("stop-base"); });
+    lifecycle.registerModule("example.addon", [&] {
+        calls.push_back("start-addon"); return true;
+    }, [&] { calls.push_back("stop-addon"); });
+
+    assert(lifecycle.start(makePlan({"example.base"})) == okapy::LifecycleResult::Started);
+    assert(lifecycle.start(makePlan({"example.base", "example.addon"}))
+           == okapy::LifecycleResult::Started);
+    assert(lifecycle.runningCount() == 2);
+    assert((calls == std::vector<std::string>{"start-base", "start-addon"}));
+
+    lifecycle.stopAll();
+    assert((calls == std::vector<std::string>{
+        "start-base", "start-addon", "stop-addon", "stop-base"}));
+}
+
+void testIncrementalFailureRollsBackOnlyNewModules() {
+    okapy::ModLifecycleManager lifecycle;
+    std::vector<std::string> calls;
+    lifecycle.registerModule("example.base", [&] {
+        calls.push_back("start-base"); return true;
+    }, [&] { calls.push_back("stop-base"); });
+    lifecycle.registerModule("example.addon", [&] {
+        calls.push_back("start-addon"); return false;
+    }, [&] { calls.push_back("stop-addon"); });
+
+    assert(lifecycle.start(makePlan({"example.base"})) == okapy::LifecycleResult::Started);
+    assert(lifecycle.start(makePlan({"example.base", "example.addon"}))
+           == okapy::LifecycleResult::InitializationFailed);
+    assert(lifecycle.isRunning("example.base"));
+    assert(!lifecycle.isRunning("example.addon"));
+    assert(lifecycle.runningCount() == 1);
+    assert((calls == std::vector<std::string>{
+        "start-base", "start-addon", "stop-addon"}));
+    lifecycle.stopAll();
+    assert(calls.back() == "stop-base");
+}
+
 void testFailedInitializerRollsBack() {
     okapy::ModLifecycleManager lifecycle;
     std::vector<std::string> calls;
@@ -95,6 +138,8 @@ void testCallbackExceptions() {
 
 int main() {
     testStartAndReverseShutdown();
+    testIncrementalStartPreservesExistingModules();
+    testIncrementalFailureRollsBackOnlyNewModules();
     testFailedInitializerRollsBack();
     testInvalidPlansAndRegistration();
     testCallbackExceptions();
