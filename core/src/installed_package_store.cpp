@@ -136,7 +136,7 @@ std::vector<PackageDiscovery> InstalledPackageStore::discoverInstalled() {
         }
         std::string contents((std::istreambuf_iterator<char>(input)),
                              std::istreambuf_iterator<char>());
-        if (!input.eof() || contents.size() != fileSize) {
+        if (contents.size() != fileSize) {
             discovery.result = PackageStoreResult::InvalidManifest;
             discovery.error = "Manifest read was incomplete.";
             discoveries.push_back(std::move(discovery));
