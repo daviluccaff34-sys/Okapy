@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <exception>
 #include <utility>
+#include <vector>
 
 namespace okapy {
 
@@ -24,16 +25,17 @@ LifecycleResult ModLifecycleManager::registerModule(
 
 LifecycleResult ModLifecycleManager::start(const ModLoadPlan& plan) {
     if (!plan.isReady()) return LifecycleResult::InvalidLoadPlan;
-    if (!m_startOrder.empty()) return LifecycleResult::AlreadyRunning;
 
     for (const auto& id : plan.dependencies.loadOrder) {
-        if (m_modules.find(id) == m_modules.end()) {
+        if (m_modules.find(id) == m_modules.end())
             return LifecycleResult::MissingModule;
-        }
     }
 
+    std::vector<std::string> startedThisCall;
     for (const auto& id : plan.dependencies.loadOrder) {
         auto& entry = m_modules.at(id);
+        if (entry.state == ModLifecycleState::Running) continue;
+
         entry.state = ModLifecycleState::Initializing;
         entry.error.clear();
 
@@ -47,9 +49,7 @@ LifecycleResult ModLifecycleManager::start(const ModLoadPlan& plan) {
         }
 
         if (!initialized) {
-            if (entry.error.empty()) {
-                entry.error = "Mod initializer returned false.";
-            }
+            if (entry.error.empty()) entry.error = "Mod initializer returned false.";
             entry.state = ModLifecycleState::Failed;
             try {
                 if (entry.shutdown) entry.shutdown();
@@ -59,15 +59,39 @@ LifecycleResult ModLifecycleManager::start(const ModLoadPlan& plan) {
             } catch (...) {
                 entry.error += " Shutdown callback threw an unknown exception.";
             }
-            stopAll();
+
+            // Roll back only modules started by this invocation. Previously running
+            // mods are left untouched when a later activation fails.
+            for (auto it = startedThisCall.rbegin(); it != startedThisCall.rend(); ++it) {
+                auto& started = m_modules.at(*it);
+                started.state = ModLifecycleState::Stopping;
+                try {
+                    if (started.shutdown) started.shutdown();
+                    started.state = ModLifecycleState::Stopped;
+                } catch (const std::exception& exception) {
+                    started.error = exception.what();
+                    started.state = ModLifecycleState::Failed;
+                } catch (...) {
+                    started.error = "Mod shutdown callback threw an unknown exception.";
+                    started.state = ModLifecycleState::Failed;
+                }
+                if (!m_startOrder.empty() && m_startOrder.back() == *it)
+                    m_startOrder.pop_back();
+                else
+                    m_startOrder.erase(std::remove(m_startOrder.begin(),
+                        m_startOrder.end(), *it), m_startOrder.end());
+            }
             return LifecycleResult::InitializationFailed;
         }
 
         entry.state = ModLifecycleState::Running;
         m_startOrder.push_back(id);
+        startedThisCall.push_back(id);
     }
 
-    return LifecycleResult::Started;
+    return startedThisCall.empty()
+        ? LifecycleResult::AlreadyRunning
+        : LifecycleResult::Started;
 }
 
 LifecycleResult ModLifecycleManager::stopAll() noexcept {
