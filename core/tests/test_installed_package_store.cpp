@@ -30,6 +30,12 @@ int main() {
         })json";
         assert(manifest.good());
     }
+    {
+        std::ofstream library(root / "example.mod" / "libs" / "libexample.so",
+                              std::ios::binary);
+        library << "not a real shared library; path validation only";
+        assert(library.good());
+    }
 
     okapy::ModRegistry registry;
     okapy::InstalledModCatalog catalog(registry);
@@ -40,6 +46,9 @@ int main() {
     assert(store.listPackageIds().size() == 1);
     assert(store.listPackageIds().front() == "example.mod");
     assert(store.packagePath("../outside").empty());
+    assert(store.entrypointPath("example.mod", "arm64-v8a") ==
+           fs::canonical(root / "example.mod" / "libs" / "libexample.so").string());
+    assert(store.entrypointPath("example.mod", "x86") .empty());
 
     const auto discoveries = store.discoverInstalled();
     assert(discoveries.size() == 1);
@@ -52,6 +61,16 @@ int main() {
     const auto repeatedScan = store.discoverInstalled();
     assert(repeatedScan.size() == 1);
     assert(repeatedScan.front().result == okapy::PackageStoreResult::AlreadyRegistered);
+
+    fs::remove(root / "example.mod" / "libs" / "libexample.so", error);
+    assert(!error);
+    assert(store.entrypointPath("example.mod", "arm64-v8a").empty());
+    {
+        std::ofstream library(root / "example.mod" / "libs" / "libexample.so",
+                              std::ios::binary);
+        library << "restored";
+        assert(library.good());
+    }
 
     assert(catalog.setEnabled("example.mod", true));
     assert(store.uninstall("example.mod") == okapy::PackageStoreResult::ModEnabled);
