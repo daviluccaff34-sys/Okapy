@@ -2,6 +2,7 @@
 
 #include <limits>
 #include <string>
+#include <utility>
 
 namespace okapy {
 
@@ -25,6 +26,7 @@ ConfigStore& Core::config() noexcept { return m_configStore; }
 const ConfigStore& Core::config() const noexcept { return m_configStore; }
 PermissionManager& Core::permissions() noexcept { return m_permissionManager; }
 const PermissionManager& Core::permissions() const noexcept { return m_permissionManager; }
+
 NativeModLoadResult Core::loadInstalledMod(
     std::string_view modId, std::string_view androidAbi,
     NativeModLoadInfo* outInfo) {
@@ -36,6 +38,63 @@ NativeModLoadResult Core::loadInstalledMod(
     return m_nativeModLoader.load(
         libraryPath, m_lifecycleManager, api, outInfo, modId);
 }
+
+InstalledModEnableResult Core::enableInstalledMod(
+    std::string_view modId, std::string_view androidAbi, bool userConsent,
+    NativeModLoadInfo* outInfo) {
+    if (!userConsent) return InstalledModEnableResult::ConsentRequired;
+    if (!m_initialized) return InstalledModEnableResult::NotInitialized;
+    if (!m_installedModCatalog.manifest(modId) || !m_modRegistry.find(modId))
+        return InstalledModEnableResult::NotFound;
+    if (m_installedModCatalog.isEnabled(modId))
+        return InstalledModEnableResult::AlreadyEnabled;
+
+    // Resolve against a temporary registry so the candidate is not marked enabled
+    // until every library has loaded and its lifecycle initializer has succeeded.
+    ModRegistry candidateRegistry;
+    bool candidateFound = false;
+    for (auto mod : m_modRegistry.list()) {
+        if (mod.id == modId) {
+            mod.state = ModState::Enabled;
+            candidateFound = true;
+        }
+        candidateRegistry.add(std::move(mod));
+    }
+    if (!candidateFound) return InstalledModEnableResult::NotFound;
+
+    const auto dependencyReport = DependencyManager{}.resolve(
+        candidateRegistry, m_installedModCatalog.manifests());
+    if (dependencyReport.hasErrors() || dependencyReport.loadOrder.empty())
+        return InstalledModEnableResult::DependencyError;
+
+    // A single explicit consent covers the selected mod and the dependency chain
+    // that the resolver includes in this activation plan.
+    for (const auto& dependencyId : dependencyReport.loadOrder) {
+        if (m_nativeModLoader.contains(dependencyId)) continue;
+        const auto loadResult = loadInstalledMod(dependencyId, androidAbi);
+        if (loadResult != NativeModLoadResult::Registered)
+            return InstalledModEnableResult::NativeLoadFailed;
+    }
+
+    ModLoadPlan plan;
+    plan.dependencies = dependencyReport;
+    const auto lifecycleResult = m_lifecycleManager.start(plan);
+    if (lifecycleResult != LifecycleResult::Started &&
+        lifecycleResult != LifecycleResult::AlreadyRunning) {
+        return InstalledModEnableResult::LifecycleFailed;
+    }
+
+    if (!m_installedModCatalog.setEnabled(modId, true))
+        return InstalledModEnableResult::CatalogUpdateFailed;
+    if (outInfo) {
+        const auto loaded = m_nativeModLoader.list();
+        for (const auto& info : loaded) {
+            if (info.id == modId) { *outInfo = info; break; }
+        }
+    }
+    return InstalledModEnableResult::Enabled;
+}
+
 NativeModLoader& Core::nativeMods() noexcept { return m_nativeModLoader; }
 const NativeModLoader& Core::nativeMods() const noexcept { return m_nativeModLoader; }
 ModLifecycleManager& Core::lifecycle() noexcept { return m_lifecycleManager; }
