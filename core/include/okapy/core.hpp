@@ -54,6 +54,11 @@ public:
     [[nodiscard]] PermissionManager& permissions() noexcept;
     [[nodiscard]] const PermissionManager& permissions() const noexcept;
     [[nodiscard]] OkapyHostApiV1 hostApi() noexcept;
+    // Explicitly loads/query-registers the native library selected by the installed package manifest.
+    // This executes code from that library; callers must obtain the user's consent first.
+    NativeModLoadResult loadInstalledMod(
+        std::string_view modId, std::string_view androidAbi,
+        NativeModLoadInfo* outInfo = nullptr);
     [[nodiscard]] NativeModLoader& nativeMods() noexcept;
     [[nodiscard]] const NativeModLoader& nativeMods() const noexcept;
     [[nodiscard]] ModLifecycleManager& lifecycle() noexcept;
