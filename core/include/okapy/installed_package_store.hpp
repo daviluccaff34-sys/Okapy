@@ -40,6 +40,10 @@ public:
     [[nodiscard]] std::string root() const;
     [[nodiscard]] std::vector<std::string> listPackageIds() const;
     [[nodiscard]] std::string packagePath(std::string_view modId) const;
+    // Returns a canonical regular-file path only when the manifest-declared entrypoint
+    // exists inside the package and no path component is a symlink.
+    [[nodiscard]] std::string entrypointPath(
+        std::string_view modId, std::string_view androidAbi) const;
     [[nodiscard]] std::vector<PackageDiscovery> discoverInstalled();
 
     PackageStoreResult registerInstalled(ModInfo mod, ModManifest manifest);
