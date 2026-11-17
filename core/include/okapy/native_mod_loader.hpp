@@ -21,7 +21,8 @@ enum class NativeModLoadResult {
     InvalidAbi,
     InvalidModId,
     DuplicateMod,
-    LifecycleRegistrationFailed
+    LifecycleRegistrationFailed,
+    ManifestIdMismatch
 };
 
 struct NativeModLoadInfo {
@@ -44,7 +45,8 @@ public:
         std::string_view absolutePath,
         ModLifecycleManager& lifecycle,
         const OkapyHostApiV1& hostApi,
-        NativeModLoadInfo* outInfo = nullptr);
+        NativeModLoadInfo* outInfo = nullptr,
+        std::string_view expectedModId = {});
 
     [[nodiscard]] bool contains(std::string_view id) const noexcept;
     [[nodiscard]] std::vector<NativeModLoadInfo> list() const;
